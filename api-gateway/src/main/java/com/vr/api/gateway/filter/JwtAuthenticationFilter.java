@@ -1,6 +1,7 @@
 
 package com.vr.api.gateway.filter;
 
+import com.vr.api.gateway.service.JwtService;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtAuthenticationFilter
         extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
+    private final JwtService jwtService;
 
-    public JwtAuthenticationFilter() {
+    public JwtAuthenticationFilter(JwtService jwtService) {
         super(Config.class);
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -27,9 +30,10 @@ public class JwtAuthenticationFilter
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
-
-            // NO JWT validation here (as requested)
-
+            if (jwtService.isTokenExpired(authHeader.substring(7))) {
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
             return chain.filter(exchange);
         };
     }

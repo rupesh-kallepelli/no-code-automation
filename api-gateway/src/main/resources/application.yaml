@@ -33,3 +33,5 @@ spring:
                   - OPTIONS
                 allowed-headers: "*"
                 allow-credentials: false
+jwt:
+  secret: f360a42d687718e2d958ab6ecb13ddfb2ce8e1abab3324dda23408f09dca40eb

@@ -1,0 +1,254 @@
+# ==================================================
+# Ollama Persistent Volume Claim
+# ==================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-pvc
+  namespace: kallepallirupesh-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# ==================================================
+# PostgreSQL (OpenShift-compatible, ephemeral)
+# ==================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: kallepallirupesh-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: registry.redhat.io/rhel9/postgresql-15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRESQL_DATABASE
+              value: openwebui
+            - name: POSTGRESQL_USER
+              value: openwebui
+            - name: POSTGRESQL_PASSWORD
+              value: openwebui123
+            - name: PGDATA
+              value: /tmp/pgdata
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+---
+# ==================================================
+# PostgreSQL Service
+# ==================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: kallepallirupesh-dev
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# ==================================================
+# Ollama Deployment
+# ==================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: kallepallirupesh-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - containerPort: 11434
+          env:
+            - name: HOME
+              value: /tmp
+            - name: OLLAMA_MODELS
+              value: /tmp/.ollama/models
+          volumeMounts:
+            - name: ollama-storage
+              mountPath: /tmp/.ollama
+          # 🔴 AUTO-PULL MODEL HERE
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    ollama pull qwen2.5:0.5b || true
+
+          resources:
+            requests:
+              memory: "4Gi"
+            limits:
+              memory: "6Gi"
+      volumes:
+        - name: ollama-storage
+          persistentVolumeClaim:
+            claimName: ollama-pvc
+---
+# ==================================================
+# Ollama Service
+# ==================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: kallepallirupesh-dev
+spec:
+  selector:
+    app: ollama
+  ports:
+    - name: http
+      port: 11434
+      targetPort: 11434
+---
+# ==================================================
+# Open WebUI Deployment (FINAL FIXED)
+# ==================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-webui
+  namespace: kallepallirupesh-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open-webui
+  template:
+    metadata:
+      labels:
+        app: open-webui
+    spec:
+      containers:
+        - name: open-webui
+          image: ghcr.io/open-webui/open-webui:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # ----------------------------
+            # OpenShift REQUIRED
+            # ----------------------------
+            - name: HOME
+              value: /tmp
+
+            # 🔴 Writable paths redirected
+            - name: DATA_DIR
+              value: /tmp/open-webui
+            - name: WEBUI_UPLOADS_DIR
+              value: /tmp/open-webui/uploads
+            - name: WEBUI_STORAGE_PATH
+              value: /tmp/open-webui/storage
+
+            # PostgreSQL backend
+            - name: DATABASE_URL
+              value: postgresql://openwebui:openwebui123@postgres:5432/openwebui
+
+            # Ollama
+            - name: OLLAMA_BASE_URL
+              value: http://ollama:11434
+
+            # Security
+            - name: WEBUI_SECRET_KEY
+              value: openshift-trial-secret-key
+
+          volumeMounts:
+            - name: webui-data
+              mountPath: /tmp/open-webui
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+      volumes:
+        - name: webui-data
+          emptyDir: {}
+---
+# ==================================================
+# Open WebUI Service
+# ==================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-webui
+  namespace: kallepallirupesh-dev
+spec:
+  selector:
+    app: open-webui
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+# ==================================================
+# OpenShift Route
+# ==================================================
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: open-webui
+  namespace: kallepallirupesh-dev
+spec:
+  to:
+    kind: Service
+    name: open-webui
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+---
+# ==================================================
+# OLLAMA Route
+# ==================================================
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ollama
+  namespace: kallepallirupesh-dev
+spec:
+  to:
+    kind: Service
+    name: ollama
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+
+

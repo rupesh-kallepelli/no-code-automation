@@ -17,7 +17,7 @@ public class TestController {
     }
 
     @PostMapping("/run-test")
-    public String runTest(@RequestBody String testCase) {
+    public String runTest(@RequestBody String testCase) throws Exception {
         return testService.runTest(testCase);
     }
 }

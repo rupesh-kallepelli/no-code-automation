@@ -1,13 +1,17 @@
 package com.vr.ai.automation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.ai.automation.cdp.BrowserType;
-import com.vr.ai.automation.cdp.CdpBrowserSessionV2;
+import com.vr.actions.ActionContext;
+import com.vr.actions.WebActions;
+import com.vr.actions.page.PageActions;
 import com.vr.ai.automation.entity.ActionType;
 import com.vr.ai.automation.entity.Step;
 import com.vr.ai.automation.entity.TestPlan;
 import com.vr.ai.automation.executor.TestExecutor;
 import com.vr.ai.automation.planner.AIPlanner;
+import com.vr.cdp.client.CDPClient;
+import com.vr.cdp.client.ws.RawCDPClient;
+import com.vr.launcher.chrome.ChromeInstance;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
@@ -24,34 +28,47 @@ public class TestService {
     }
 
     public String runTest(String testCase) {
-
+        LauncherService launcherService = new LauncherService();
+        TestPlan plan = generateTestPlan(testCase);
+        System.out.println(plan);
         try {
-            // 1. Ask AI to generate test plan
-            String jsonPlan = aiPlanner.generatePlan(testCase);
-
-            // 2. Parse JSON → TestPlan
-            TestPlan plan = mapper.readValue(jsonPlan, TestPlan.class);
-            System.out.println(plan);
-            validatePlan(plan);
-            // 3. Execute
-            TestExecutor executor =
-                    new TestExecutor(new CdpBrowserSessionV2(
-                            BrowserType.EDGE,
-                            "",
-                            false));
-
-            executor.execute(plan);
-
-            return "✅ Test executed successfully";
-
+            return executeTest(launcherService, plan);
         } catch (Exception e) {
+            launcherService.closeInstance();
             System.out.println(e.getMessage());
-            return "❌ Test failed: " + e.getMessage();
+            return runTest(testCase);
+        } finally {
+            launcherService.closeInstance();
         }
     }
 
-    private static final Set<ActionType> ALLOWED_ACTIONS =
-            EnumSet.allOf(ActionType.class);
+    private String executeTest(LauncherService launcherService, TestPlan plan) throws Exception {
+        ChromeInstance instance = launcherService.getChromeInstance();
+        CDPClient client = new RawCDPClient(instance.pageWebSocketUrl());
+        ActionContext ctx = new ActionContext(client);
+        System.out.println(instance.pageWebSocketUrl());
+
+        PageActions page = new PageActions(ctx);
+        WebActions web = new WebActions(ctx);
+
+        TestExecutor executor = new TestExecutor(web, page);
+        executor.execute(plan);
+        return "✅ Test executed successfully";
+    }
+
+
+    private TestPlan generateTestPlan(String testCase) {
+        try {
+            String jsonPlan = aiPlanner.generatePlan(testCase);
+            TestPlan plan = mapper.readValue(jsonPlan, TestPlan.class);
+            validatePlan(plan);
+            return plan;
+        } catch (Exception e) {
+            return generateTestPlan(testCase);
+        }
+    }
+
+    private static final Set<ActionType> ALLOWED_ACTIONS = EnumSet.allOf(ActionType.class);
 
     private void validatePlan(TestPlan plan) {
 

@@ -5,5 +5,6 @@ public enum ActionType {
     TYPE,
     CLICK,
     WAIT_FOR_VISIBLE,
-    ASSERT_VISIBLE
+    ASSERT_VISIBLE,
+    WAIT_TIMEOUT
 }

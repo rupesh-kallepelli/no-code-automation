@@ -1,0 +1,38 @@
+package com.vr.cdp.protocol.command.input;
+
+
+import com.vr.cdp.protocol.command.response.EmptyResult;
+
+public class InputDispatchMouseEvent extends InputCommand<EmptyResult> {
+
+    private final Params params;
+
+    public InputDispatchMouseEvent(
+            String type,
+            double x,
+            double y,
+            String button,
+            int clickCount
+    ) {
+        super("Input.dispatchMouseEvent");
+        this.params = new Params(type, x, y, button, clickCount);
+    }
+
+    @Override
+    public Object getParams() {
+        return params;
+    }
+
+    @Override
+    public Class<EmptyResult> getResultType() {
+        return EmptyResult.class;
+    }
+
+    public record Params(
+            String type,     // mousePressed, mouseReleased, mouseMoved, mouseWheel
+            double x,
+            double y,
+            String button,   // left, right, middle, none
+            int clickCount
+    ) {}
+}

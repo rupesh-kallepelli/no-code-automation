@@ -20,7 +20,7 @@ jobs:
           distribution: temurin
       - name: Copy maven to cdp-protocol and Build
         run: |
-          cp ./.maven/ cdp-protocol
+          cp -r ./.maven/ cdp-protocol
           ls -lrt
           chmod +x ./mvnw
           ./mvnw clean install

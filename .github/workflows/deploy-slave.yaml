@@ -22,5 +22,6 @@ jobs:
         run: |
           cp -r ./.maven/ cdp-protocol
           cd ./cdp-protocol
+          ls -lr
           chmod +x ./mvnw
           ./mvnw clean install

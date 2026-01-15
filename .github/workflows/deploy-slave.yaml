@@ -72,10 +72,10 @@ jobs:
           # Pick the first main jar and move it
           MAIN_JAR=$(find target -maxdepth 1 -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" | head -n 1)
           echo "Using JAR: $MAIN_JAR"
-          mv "$MAIN_JAR" ../app.jar
+          mv "$MAIN_JAR" ./app.jar
 
           echo "Files in workspace:"
-          ls -lrt ../
+          ls -lrt
 
           cd ..
           echo "------------------------------------------------------------------------Build Successfully for no-code-ai-automation------------------------------------------------------------------------"

@@ -59,18 +59,26 @@ jobs:
           cd ..
           echo " ------------------------------------------------------------------------Build Successfully for chrome-cdp-actions ------------------------------------------------------------------------"
 
-      - name: no-code-ai-automation Build
+      - name: Build no-code-ai-automation
         run: |
           echo "------------------------------------------------------------------------Building no-code-ai-automation------------------------------------------------------------------------"
           cd ./no-code-ai-automation
-          ls -lrt
           chmod +x ./mvnw
           ./mvnw clean install -DskipTests
-          mv -f target/*.jar ../app.jar
-          ls -lrt
-          cd ..
-          echo " ------------------------------------------------------------------------Build Successfully for no-code-ai-automation ------------------------------------------------------------------------"
 
+          echo "Files in target:"
+          ls -lrt target/
+
+          # Pick the first main jar and move it
+          MAIN_JAR=$(find target -maxdepth 1 -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" | head -n 1)
+          echo "Using JAR: $MAIN_JAR"
+          mv "$MAIN_JAR" ../app.jar
+
+          echo "Files in workspace:"
+          ls -lrt ../
+
+          cd ..
+          echo "------------------------------------------------------------------------Build Successfully for no-code-ai-automation------------------------------------------------------------------------"
       - name: Install OpenShift CLI
         uses: redhat-actions/oc-installer@v1
 

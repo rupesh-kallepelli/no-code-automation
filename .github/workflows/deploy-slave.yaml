@@ -21,6 +21,6 @@ jobs:
       - name: Copy maven to cdp-protocol and Build
         run: |
           cp -r ./.maven/ cdp-protocol
-          ls -lrt
+          cd ./cdp-protocol
           chmod +x ./mvnw
           ./mvnw clean install

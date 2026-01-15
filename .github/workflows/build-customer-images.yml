@@ -1,4 +1,4 @@
-name: Get Pods from OpenShift
+name: Setup OC
 
 on:
   workflow_dispatch:
@@ -10,19 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install OpenShift CLI
-      uses: redhat-actions/oc-installer@v1
-      
-    - name: Login to OpenShift
-      run: |
-        oc login ${{ secrets.OPENSHIFT_SERVER }} \
-          --token=${{ secrets.OPENSHIFT_TOKEN }} \
-          --insecure-skip-tls-verify
+      # Step 1: Checkout repo
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    - name: Select project
-      run: |
-        oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
+      # Step 2: Install OpenShift CLI
+      - name: Install OpenShift CLI
+        uses: redhat-actions/oc-installer@v1
 
-    - name: Get pods
-      run: |
-        oc get pods -o wide
+      # Step 3: Login to OpenShift
+      - name: Login to OpenShift
+        run: |
+          oc login ${{ secrets.OPENSHIFT_SERVER }} \
+            --token=${{ secrets.OPENSHIFT_TOKEN }} \
+            --insecure-skip-tls-verify
+
+      # Step 4: Select project
+      - name: Select project
+        run: |
+          oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      # Step 5: Apply manifests from repo folder
+      - name: Apply OpenShift manifests
+        run: |
+          oc apply -f ./oc-config/

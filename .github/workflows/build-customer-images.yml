@@ -33,5 +33,4 @@ jobs:
       # Step 5: Apply manifests from repo folder
       - name: Apply OpenShift manifests
         run: |
-          pwd || true || \
-          oc apply -f ./oc-config/
+          oc apply -f ./.oc-config/

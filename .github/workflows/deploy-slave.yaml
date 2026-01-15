@@ -18,7 +18,68 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
-      - name: Copy maven to cdp-protocol and Build
+
+      - name: cdp-protocol Build
         run: |
-          chmod +x ./build-jars.sh
-          /bin/bash ./build-jars.sh
+          echo "------------------------------------------------------------------------Building cdp-protocol------------------------------------------------------------------------"
+          cd ./cdp-protocol
+          ls -lrt
+          chmod +x ./mvnw
+          ./mvnw clean install
+          cd ..
+          echo "------------------------------------------------------------------------Build Successfully for cdp-protocol------------------------------------------------------------------------"
+
+      - name: launcher-interface build
+        run: |
+          echo "------------------------------------------------------------------------Building launcher-interface------------------------------------------------------------------------"
+          cd ./launcher-interface
+          ls -lrt
+          chmod +x ./mvnw
+          ./mvnw clean install
+          cd ..
+          echo "------------------------------------------------------------------------Build Successfully for launcher-interface------------------------------------------------------------------------"
+
+      - name: cdp-client build
+        run: |
+          echo "------------------------------------------------------------------------Building cdp-client------------------------------------------------------------------------"
+          cd ./cdp-client
+          ls -lrt
+          chmod +x ./mvnw
+          ./mvnw clean install
+          cd ..
+          echo "------------------------------------------------------------------------Build Successfully for cdp-client-------------------------------------------------------------------------"
+
+      - name: chrome-cdp-actions Build
+        run: |
+          echo "------------------------------------------------------------------------Building chrome-cdp-actions------------------------------------------------------------------------"
+          cd ./chrome-cdp-actions
+          ls -lrt
+          chmod +x ./mvnw
+          ./mvnw clean install
+          cd ..
+          echo " ------------------------------------------------------------------------Build Successfully for chrome-cdp-actions ------------------------------------------------------------------------"
+
+      - name: no-code-ai-automation Build
+        run: |
+          echo "------------------------------------------------------------------------Building no-code-ai-automation------------------------------------------------------------------------"
+          cd ./no-code-ai-automation
+          ls -lrt
+          chmod +x ./mvnw
+          ./mvnw clean install -DskipTests
+          mv -f target/*.jar ../app.jar
+          ls -lrt
+          cd ..
+          echo " ------------------------------------------------------------------------Build Successfully for no-code-ai-automation ------------------------------------------------------------------------"
+
+      - name: Install OpenShift CLI
+        uses: redhat-actions/oc-installer@v1
+
+      - name: Login to OpenShift
+        run: |
+          oc login ${{ secrets.OPENSHIFT_SERVER }} \
+            --token=${{ secrets.OPENSHIFT_TOKEN }} \
+            --insecure-skip-tls-verify
+
+      - name: Build no-code-ai-automation
+        run: |
+          oc start-build no-code-ai-automation --from-file=./no-code-ai-automation/app.jar

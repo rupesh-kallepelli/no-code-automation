@@ -1,0 +1,17 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: no-code-ai-automation
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: jdk17-slim:latest
+  output:
+    to:
+      kind: ImageStreamTag
+      name: no-code-ai-automation:latest

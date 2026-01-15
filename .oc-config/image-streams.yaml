@@ -52,3 +52,34 @@ spec:
   triggers:
     - type: ConfigChange
     - type: ImageChange
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: springboot-b2i
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: no-code-ai-automation
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: springboot-b2i
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: jdk17-slim:latest
+  output:
+    to:
+      kind: ImageStreamTag
+      name: springboot-b2i:latest
+  triggers:
+    - type: ConfigChange
+    - type: ImageChange

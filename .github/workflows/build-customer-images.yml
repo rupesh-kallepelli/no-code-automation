@@ -12,9 +12,7 @@ jobs:
     steps:
     - name: Install OpenShift CLI
       uses: redhat-actions/oc-installer@v1
-      with:
-        oc_version: "4.14"
-
+      
     - name: Login to OpenShift
       run: |
         oc login ${{ secrets.OPENSHIFT_SERVER }} \

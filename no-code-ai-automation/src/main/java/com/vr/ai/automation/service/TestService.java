@@ -1,17 +1,13 @@
 package com.vr.ai.automation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.actions.ActionContext;
-import com.vr.actions.WebActions;
-import com.vr.actions.page.PageActions;
+import com.vr.actions.page.Page;
 import com.vr.ai.automation.entity.ActionType;
 import com.vr.ai.automation.entity.Step;
 import com.vr.ai.automation.entity.TestPlan;
 import com.vr.ai.automation.executor.TestExecutor;
 import com.vr.ai.automation.planner.AIPlanner;
-import com.vr.cdp.client.CDPClient;
-import com.vr.cdp.client.ws.RawCDPClient;
-import com.vr.launcher.chrome.ChromeInstance;
+import com.vr.ai.automation.util.ScreencastBroadcaster;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
@@ -21,14 +17,16 @@ import java.util.Set;
 public class TestService {
 
     private final AIPlanner aiPlanner;
+    private final ScreencastBroadcaster screencastBroadcaster;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public TestService(AIPlanner aiPlanner) {
+    public TestService(AIPlanner aiPlanner, ScreencastBroadcaster screencastBroadcaster) {
         this.aiPlanner = aiPlanner;
+        this.screencastBroadcaster = screencastBroadcaster;
     }
 
-    public String runTest(String testCase) {
-        LauncherService launcherService = new LauncherService();
+    public String runTest(String testCase) throws Exception {
+        LauncherService launcherService = new LauncherService(screencastBroadcaster);
         TestPlan plan = generateTestPlan(testCase);
         System.out.println(plan);
         try {
@@ -43,15 +41,16 @@ public class TestService {
     }
 
     private String executeTest(LauncherService launcherService, TestPlan plan) throws Exception {
-        ChromeInstance instance = launcherService.getChromeInstance();
-        CDPClient client = new RawCDPClient(instance.pageWebSocketUrl());
-        ActionContext ctx = new ActionContext(client);
-        System.out.println(instance.pageWebSocketUrl());
+        Page page = launcherService.getChromeInstance(true);
+        page.enable();
+        page.cast(
+                "jpeg",        // format
+                90,            // quality (for JPEG)
+                1920,          // maxWidth
+                1080           // maxHeight
+        );
 
-        PageActions page = new PageActions(ctx);
-        WebActions web = new WebActions(ctx);
-
-        TestExecutor executor = new TestExecutor(web, page);
+        TestExecutor executor = new TestExecutor(page);
         executor.execute(plan);
         return "✅ Test executed successfully";
     }

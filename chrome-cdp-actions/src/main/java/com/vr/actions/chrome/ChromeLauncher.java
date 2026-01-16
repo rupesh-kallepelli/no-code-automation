@@ -45,6 +45,7 @@ public class ChromeLauncher implements BrowserLauncher {
         List<String> cmd = new ArrayList<>();
         cmd.add(chromeBinary);
         cmd.add("--remote-debugging-port=" + remoteDebuggingPort);
+        cmd.add("--no-sandbox");
         cmd.add("--no-first-run");
         cmd.add("--no-default-browser-check");
         cmd.add("--disable-popup-blocking");

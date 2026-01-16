@@ -90,4 +90,4 @@ jobs:
 
       - name: Build no-code-ai-automation
         run: |
-          oc start-build no-code-ai-automation --from-file=./no-code-ai-automation/app.jar
+          oc start-build no-code-ai-automation --from-file=./no-code-ai-automation/app.jar --follow

@@ -147,6 +147,7 @@ public class ChromeLauncher implements BrowserLauncher {
             candidates.add("/usr/bin/google-chrome");
             candidates.add("/usr/bin/chromium");
             candidates.add("/usr/bin/chromium-browser");
+            candidates.add("/opt/chrome/chrome-linux64/chrome");
         }
 
         for (String path : candidates) {

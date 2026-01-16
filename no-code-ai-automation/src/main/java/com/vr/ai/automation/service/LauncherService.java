@@ -20,7 +20,7 @@ public class LauncherService {
         ChromeLauncher.Builder chromeLauncher = ChromeLauncher.builder()
                 .headless(false)
                 .userDataDir("tmp/profile")
-                .binaryPath("C:\\Users\\kalle\\Softwares\\chrome-v143.0.7499.192\\chrome-win64\\chrome.exe")
+//                .binaryPath("C:\\Users\\kalle\\Softwares\\chrome-v143.0.7499.192\\chrome-win64\\chrome.exe")
                 .remoteDebuggingPort(1000);
         if (broadCast) chromeLauncher.enableScreenCasting(true).broadcast(screencastBroadcaster);
         this.instance = chromeLauncher.build().launch();

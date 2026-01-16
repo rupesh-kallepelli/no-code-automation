@@ -27,20 +27,66 @@ spec:
     type: Dockerfile
     dockerfile: |
       FROM registry.access.redhat.com/ubi8/openjdk-17:1.17-1
-
-      USER root
-
-      # Install unzip & curl
-      RUN microdnf install -y unzip curl && microdnf clean all
-
-      # Download Chrome-for-Testing v143
-      RUN curl -L https://storage.googleapis.com/chrome-for-testing-public/143.0.7499.192/linux64/chrome-linux64.zip -o chrome-linux64.zip \
-          && unzip chrome-linux64.zip -d /opt/chrome \
-          && rm chrome-linux64.zip
-
+      
+      USER 0
+      
+      # Install Chrome runtime dependencies
+      RUN microdnf install -y \
+          unzip \
+          curl \
+          atk \
+          gtk3 \
+          libX11 \
+          libXcomposite \
+          libXcursor \
+          libXdamage \
+          libXext \
+          libXfixes \
+          libXi \
+          libXrandr \
+          libXrender \
+          nss \
+          nspr \
+          alsa-lib \
+          cups-libs \
+          libdrm \
+          mesa-libgbm \
+          pango \
+          glib2 \
+          xorg-x11-fonts-Type1 \
+          xorg-x11-fonts-misc \
+          && microdnf clean all
+      
+      # Download Chrome-for-Testing
+      RUN curl -L https://storage.googleapis.com/chrome-for-testing-public/143.0.7499.192/linux64/chrome-linux64.zip \
+          -o /tmp/chrome.zip \
+          && unzip /tmp/chrome.zip -d /opt/chrome \
+          && rm -f /tmp/chrome.zip
+      
+      # ---- PERMISSIONS & OWNERSHIP ----
+      # Make chrome executable and accessible to any UID (OpenShift random UID safe)
+      RUN chmod -R 755 /opt/chrome \
+          && chown -R 1000:0 /opt/chrome
+      
+      # Create writable directories for runtime
+      RUN mkdir -p /app \
+                   /tmp/chrome \
+                   /home/1000 \
+          && chmod -R g+rwX /app /tmp /home/1000 \
+          && chown -R 1000:0 /app /tmp /home/1000
+      
+      # Add chrome to PATH
       ENV PATH="/opt/chrome/chrome-linux64:${PATH}"
-
+      
+      # Chrome runtime env (important for headless)
+      ENV HOME=/home/1000 \
+          TMPDIR=/tmp
+      
       WORKDIR /app
+      
+      # Drop to non-root user
+      USER 1000
+      
       CMD ["bash"]
 
   strategy:
@@ -49,9 +95,6 @@ spec:
     to:
       kind: ImageStreamTag
       name: jdk17-chrome:latest
-  triggers:
-    - type: ConfigChange
-    - type: ImageChange
 ---
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -80,6 +123,3 @@ spec:
     to:
       kind: ImageStreamTag
       name: springboot-b2i:latest
-  triggers:
-    - type: ConfigChange
-    - type: ImageChange

@@ -1,3 +1,5 @@
 spring:
   application:
     name: test-runner-slave
+browser:
+  service: http://localhost:9999

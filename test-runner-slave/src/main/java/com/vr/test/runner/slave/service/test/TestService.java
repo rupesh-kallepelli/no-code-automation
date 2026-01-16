@@ -1,12 +1,14 @@
 package com.vr.test.runner.slave.service.test;
 
-import com.vr.launcher.BrowserInstance;
+import com.vr.actions.page.v1.Page;
 import com.vr.test.runner.slave.request.Selector;
 
 import java.net.URL;
 
 public interface TestService {
-    BrowserInstance launch();
+    Page launch();
+
+    void close(Long id);
 
     void navigate(String url);
 

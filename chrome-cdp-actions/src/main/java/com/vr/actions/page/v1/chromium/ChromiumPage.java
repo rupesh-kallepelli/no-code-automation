@@ -1,9 +1,8 @@
-package com.vr.actions.page.chromium;
+package com.vr.actions.page.v1.chromium;
 
-import com.vr.actions.chrome.ChromeInstance;
 import com.vr.actions.dom.DOMActions;
 import com.vr.actions.input.InputActions;
-import com.vr.actions.page.Page;
+import com.vr.actions.page.v1.Page;
 import com.vr.actions.uitl.ScreenshotUtil;
 import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.client.broadcast.BroadCaster;
@@ -11,45 +10,48 @@ import com.vr.cdp.client.ws.RawCDPClient;
 import com.vr.cdp.client.ws.ScreenCastClient;
 import com.vr.cdp.protocol.command.page.*;
 
-import java.io.File;
 import java.util.Base64;
+import java.util.Objects;
 
-public class ChromiumPage extends ChromeInstance implements Page {
+public class ChromiumPage implements Page {
+    private final Long id;
     private final CDPClient client;
     private final DOMActions dom;
     private final InputActions input;
     private BroadCaster broadCaster;
 
     public ChromiumPage(
-            Process process,
-            String browserWs,
-            String pageWs,
-            File userDataDir,
-            boolean enableBroadCasting,
-            BroadCaster broadCaster
+            Long id,
+            String pageWs
     ) throws Exception {
-        super(process, browserWs, pageWs, userDataDir);
-        if (enableBroadCasting) {
-            client = new ScreenCastClient(pageWs, broadCaster);
-        } else
-            client = new RawCDPClient(pageWs);
+        this.id = id;
+        this.client = new RawCDPClient(pageWs);
         this.dom = new DOMActions(client);
         this.input = new InputActions(client);
     }
 
+
     public ChromiumPage(
+            Long id,
             String pageWs,
-            File userDataDir,
             boolean enableBroadCasting,
             BroadCaster broadCaster
     ) throws Exception {
-        super(null, null, pageWs, userDataDir);
+        this.id = id;
         if (enableBroadCasting) {
-            client = new ScreenCastClient(pageWs, broadCaster);
+            if (Objects.isNull(broadCaster)) throw new BroadCasterCannotBeNull("Broadcaster is null");
+            this.broadCaster = broadCaster;
+            this.client = new ScreenCastClient(pageWs, broadCaster);
         } else
-            client = new RawCDPClient(pageWs);
+            this.client = new RawCDPClient(pageWs);
         this.dom = new DOMActions(client);
         this.input = new InputActions(client);
+    }
+
+
+    @Override
+    public Long getId() {
+        return id;
     }
 
     @Override

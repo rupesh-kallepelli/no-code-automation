@@ -1,0 +1,116 @@
+# =========================================
+# Nginx-only: ConfigMap + Deployment + Service + Route
+# Labels: app=nginx-only (so you can clean up in 1 command)
+# =========================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-only-conf
+  labels:
+    app: nginx-only
+data:
+  nginx.conf: |
+    worker_processes  1;
+    events { worker_connections  1024; }
+    http {
+      # --- HEALTH ENDPOINT (always available) ---
+      server {
+        listen 8080;
+    
+        # Simple health endpoint so readiness works even without Chrome
+        location = /healthz {
+          return 200 'ok';
+          add_header Content-Type text/plain;
+        }
+    
+        # ---- Optional: when Chrome is added, uncomment to proxy CDP ----
+        # location / {
+        #   proxy_pass http://127.0.0.1:9222;
+        #   proxy_http_version 1.1;
+        #   proxy_set_header Upgrade $http_upgrade;
+        #   proxy_set_header Connection "upgrade";
+        #   proxy_set_header Host $host;
+        # }
+      }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-only
+  labels:
+    app: nginx-only
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-only
+  template:
+    metadata:
+      labels:
+        app: nginx-only
+    spec:
+      containers:
+        - name: nginx
+          image: registry.access.redhat.com/ubi9/nginx-120
+          command: ["nginx"]
+          args: ["-g","daemon off;"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 4
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: conf
+          configMap:
+            name: nginx-only-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-only-svc
+  labels:
+    app: nginx-only
+spec:
+  selector:
+    app: nginx-only
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nginx-only
+  labels:
+    app: nginx-only
+spec:
+  to:
+    kind: Service
+    name: nginx-only-svc
+  port:
+    targetPort: http
+  tls:
+    termination: edge

@@ -1,35 +1,58 @@
 package com.vr.test.runner.slave.service.test.impl;
 
-import com.vr.actions.chrome.ChromeLauncher;
-import com.vr.actions.page.Page;
+import com.vr.actions.page.v1.Page;
+import com.vr.actions.page.v1.chromium.ChromiumPage;
+import com.vr.test.runner.slave.browser.request.BrowserRequest;
+import com.vr.test.runner.slave.browser.request.BrowserType;
+import com.vr.test.runner.slave.browser.response.BrowserSessionResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.util.Objects;
 
 @Service
 @RequestScope
 public class ChromeTestService extends ChromiumTestService {
 
+    private WebClient browserClient;
+
+    public ChromeTestService(@Qualifier("browserClient") WebClient browserClient) {
+        this.browserClient = browserClient;
+    }
+
     @Override
     public Page launch() {
         try {
-            return getChromeLauncher().launch();
+            BrowserSessionResponse browserSessionResponse = Objects.requireNonNull(browserClient.post()
+                            .uri("/api/v1/create")
+                            .bodyValue(new BrowserRequest(BrowserType.CHROME))
+                            .retrieve()
+                            .toEntity(BrowserSessionResponse.class)
+                            .block())
+                    .getBody();
+            String websocketUrl = browserSessionResponse.websocketUrl();
+            return new ChromiumPage(
+                    browserSessionResponse.id(),
+                    websocketUrl,
+                    false,
+                    null
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private ChromeLauncher getChromeLauncher() throws IOException {
-        return ChromeLauncher
-                .builder()
-                .headless(false)
-                .userDataDir(
-                        Files.createTempDirectory(System.getProperty("user.dir")).toAbsolutePath().toString()
-                )
-                .remoteDebuggingPort(1000)
-                .build();
+    @Override
+    public void close(Long id) {
+        ResponseEntity<Void> block = browserClient.delete()
+                .uri("/api/v1/close?id=" + id)
+                .retrieve()
+                .toEntity(Void.class)
+                .block();
     }
+
 
 }

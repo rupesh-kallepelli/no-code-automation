@@ -1,70 +1,60 @@
-package com.vr.actions.chrome;
+package com.vr.actions.chrome.v1;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.actions.chrome.exception.BroadCasterCannotBeNull;
-import com.vr.actions.page.Page;
-import com.vr.actions.page.chromium.ChromiumPage;
-import com.vr.cdp.client.broadcast.BroadCaster;
-import com.vr.launcher.BrowserLauncher;
+import com.vr.launcher.v1.BrowserDetails;
+import com.vr.launcher.v1.BrowserLauncher;
 
 import java.io.File;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class ChromeLauncher implements BrowserLauncher {
 
-    private String chromeBinary;
-    private boolean headless;
-    private int remoteDebuggingPort;
-    private File userDataDir;
-    private List<String> extraArgs;
-    private boolean enableScreenCasting = false;
-    private BroadCaster broadCaster;
-    private String websocketUrl;
+    private final String chromeBinary;
+    private final boolean headless;
+    private final int remoteDebuggingPort;
+    private final File userDataDir;
+    private final List<String> extraArgs;
 
     private ChromeLauncher(Builder b) {
-
-        if (Objects.nonNull(b.websocketUrl)) {
-            this.websocketUrl = b.websocketUrl;
-        } else {
         this.chromeBinary = resolveChromeBinary(b.binaryPath);
         this.headless = b.headless;
         this.remoteDebuggingPort = b.remoteDebuggingPort;
         this.userDataDir = b.userDataDir;
         this.extraArgs = b.extraArgs;
-            this.enableScreenCasting = b.enableScreenCasting;
-        }
-        if (enableScreenCasting && Objects.isNull(b.broadCaster))
-            throw new BroadCasterCannotBeNull("You are trying to enable the broadcaster but didn't provide one," +
-                    " please provide using broadcast() or disable enableScreenCasting(false)");
-        this.broadCaster = b.broadCaster;
     }
 
-    public Page launch() throws Exception {
 
-        if (Objects.nonNull(websocketUrl)) {
-            return new ChromiumPage(websocketUrl, userDataDir, enableScreenCasting, broadCaster);
-        }
+    public ChromeDetails launch() throws Exception {
 
         List<String> cmd = new ArrayList<>();
         cmd.add(chromeBinary);
 
-        cmd.add("--remote-debugging-port=9222");
+        cmd.add("--remote-debugging-port=" + remoteDebuggingPort);
         cmd.add("--disable-dev-shm-usage");
         cmd.add("--no-sandbox");
         cmd.add("--no-first-run");
         cmd.add("--no-default-browser-check");
         cmd.add("--disable-popup-blocking");
         cmd.add("--disable-background-networking");
+        cmd.add("--disable-extensions");
+        cmd.add("--disable-default-apps");
         cmd.add("--disable-sync");
-        cmd.add("--remote-debugging-address=0.0.0.0");
-        cmd.add("--window-size=1920,1080");
+        cmd.add("--disable-component-update");
+        cmd.add("--disable-gpu");
+        cmd.add("--disable-features=Vulkan");
+        cmd.add("--use-gl=swiftshader");
+        cmd.add("--log-level=3");
+        cmd.add("--remote-debugging-address=127.0.0.1");
+
         if (headless) {
             cmd.add("--headless=new");
         } else {
@@ -82,10 +72,7 @@ public class ChromeLauncher implements BrowserLauncher {
                 .redirectErrorStream(true)
                 .start();
 
-        String browserWs = waitForBrowserWs();
-        String pageWs = waitForFirstPageWs();
-
-        return new ChromiumPage(process, browserWs, pageWs, userDataDir, enableScreenCasting, broadCaster);
+        return new ChromeDetails(waitForFirstPageWs(), Instant.now().toEpochMilli(), process, userDataDir);
     }
 
     /* ------------------ CDP Discovery ------------------ */
@@ -120,20 +107,26 @@ public class ChromeLauncher implements BrowserLauncher {
             HttpRequest req = HttpRequest.newBuilder(
                     URI.create("http://localhost:" + remoteDebuggingPort + "/json")
             ).GET().build();
+            try {
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
 
-            HttpResponse<String> resp =
-                    client.send(req, HttpResponse.BodyHandlers.ofString());
-
-            JsonNode arr = mapper.readTree(resp.body());
-            for (JsonNode node : arr) {
-                if ("page".equals(node.get("type").asText())) {
-                    return node.get("webSocketDebuggerUrl").asText();
+                JsonNode arr = mapper.readTree(resp.body());
+                for (JsonNode node : arr) {
+                    String webSocketDebuggerUrl = node.get("webSocketDebuggerUrl").asText();
+                    if ("page".equals(node.get("type").asText())
+                            && !usedWslUrl.contains(webSocketDebuggerUrl)
+                    ) {
+                        usedWslUrl.add(webSocketDebuggerUrl);
+                        return webSocketDebuggerUrl;
+                    }
                 }
+            } catch (ConnectException ignored) {
+                Thread.sleep(100);
             }
-            Thread.sleep(100);
         }
         throw new RuntimeException("No page target found");
     }
+
 
     /* ------------------ Binary Resolution ------------------ */
 
@@ -184,23 +177,7 @@ public class ChromeLauncher implements BrowserLauncher {
         private int remoteDebuggingPort = 9222;
         private File userDataDir;
         private final List<String> extraArgs = new ArrayList<>();
-        private BroadCaster broadCaster;
-        private boolean enableScreenCasting = false;
-        private String websocketUrl;
 
-        public Builder remoteWebSocket(String websocketUrl) {
-            this.websocketUrl = websocketUrl;
-            return this;
-        }
-        public Builder enableScreenCasting(boolean enableScreenCasting) {
-            this.enableScreenCasting = enableScreenCasting;
-            return this;
-        }
-
-        public Builder broadcast(BroadCaster broadCaster) {
-            this.broadCaster = broadCaster;
-            return this;
-        }
 
         public Builder binaryPath(String binaryPath) {
             this.binaryPath = binaryPath;
@@ -231,4 +208,49 @@ public class ChromeLauncher implements BrowserLauncher {
             return new ChromeLauncher(this);
         }
     }
+
+
+    public static class ChromeDetails implements BrowserDetails {
+        private String wsUrl;
+        private final Long id;
+        private final Process process;
+        private final File usrDir;
+
+        public ChromeDetails(String wsUrl, long epochMilli, Process process, File usrDir) {
+            this.wsUrl = wsUrl;
+            this.id = epochMilli;
+            this.process = process;
+            this.usrDir = usrDir;
+        }
+
+        public String getWsUrl() {
+            return wsUrl;
+        }
+
+
+        public Long getId() {
+            return id;
+        }
+
+        public Process getProcess() {
+            return process;
+        }
+
+        public File getUsrDir() {
+            return usrDir;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            ChromeDetails that = (ChromeDetails) o;
+            return Objects.equals(wsUrl, that.wsUrl) && Objects.equals(id, that.id) && Objects.equals(process, that.process);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(wsUrl, id, process);
+        }
+    }
+
 }

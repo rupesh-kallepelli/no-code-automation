@@ -59,10 +59,10 @@ jobs:
           cd ..
           echo " ------------------------------------------------------------------------Build Successfully for chrome-cdp-actions ------------------------------------------------------------------------"
 
-      - name: Build no-code-ai-automation
+      - name: Build browser-service
         run: |
-          echo "------------------------------------------------------------------------Building no-code-ai-automation------------------------------------------------------------------------"
-          cd ./no-code-ai-automation
+          echo "------------------------------------------------------------------------Building browser-service------------------------------------------------------------------------"
+          cd ./browser-service
           chmod +x ./mvnw
           ./mvnw clean install -DskipTests
 
@@ -78,7 +78,7 @@ jobs:
           ls -lrt
 
           cd ..
-          echo "------------------------------------------------------------------------Build Successfully for no-code-ai-automation------------------------------------------------------------------------"
+          echo "------------------------------------------------------------------------Build Successfully for browser-service------------------------------------------------------------------------"
       - name: Install OpenShift CLI
         uses: redhat-actions/oc-installer@v1
 
@@ -88,6 +88,6 @@ jobs:
             --token=${{ secrets.OPENSHIFT_TOKEN }} \
             --insecure-skip-tls-verify
 
-      - name: Build no-code-ai-automation
+      - name: Build browser-service
         run: |
-          oc start-build no-code-ai-automation --from-file=./no-code-ai-automation/app.jar --follow
+          oc start-build browser-service --from-file=./browser-service/app.jar --follow

@@ -1,0 +1,202 @@
+# =========================================
+# 1) ImageStream for the CfT-based Chrome image
+# =========================================
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: jdk17-chrome
+---
+# =========================================
+# 2) BuildConfig: CfT Chrome on UBI OpenJDK 17 (OpenShift-UID-safe)
+# =========================================
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: jdk17-chrome
+spec:
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM registry.access.redhat.com/ubi8/openjdk-17:1.17-1
+      USER 0
+      
+      # Runtime deps for Chrome on UBI/RHEL
+      RUN microdnf install -y unzip curl ca-certificates \
+          atk gtk3 libX11 libXcomposite libXcursor libXdamage libXext libXfixes \
+          libXi libXrandr libXrender nss nspr alsa-lib cups-libs libdrm \
+          mesa-libgbm pango glib2 xorg-x11-fonts-Type1 xorg-x11-fonts-misc wget \
+          && microdnf clean all
+  
+      # Chrome for Testing (stable, version pinned)
+      # CfT is meant for automation; versioned and CI-friendly.
+      # Docs: https://developer.chrome.com/blog/chrome-for-testing/
+      ENV CFT_VER=143.0.7499.192
+      RUN curl -L "https://storage.googleapis.com/chrome-for-testing-public/${CFT_VER}/linux64/chrome-linux64.zip" -o /tmp/chrome.zip \
+      && unzip /tmp/chrome.zip -d /opt/chrome \
+      && rm -f /tmp/chrome.zip
+      
+      # OpenShift arbitrary UID pattern (group 0 + g=u)
+      RUN mkdir -p /app /tmp/chrome /home/default \
+      && chgrp -R 0 /opt/chrome /app /tmp /home/default /etc/passwd /etc/group \
+      && chmod -R g=u /opt/chrome /app /tmp /home/default /etc/passwd /etc/group
+      
+      ENV PATH="/opt/chrome/chrome-linux64:${PATH}" \
+      HOME=/home/default \
+      TMPDIR=/tmp
+      
+      WORKDIR /app
+  # Do not set USER; OpenShift injects a random UID at runtime.
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: jdk17-chrome:latest
+---
+# =========================================
+# 3) ConfigMap: nginx reverse proxy (listens 9223 -> proxies to Chrome 127.0.0.1:9222)
+# =========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-proxy-conf
+data:
+  nginx.conf: |
+    worker_processes  1;
+    events { worker_connections  1024; }
+    http {
+      map $http_upgrade $connection_upgrade { default upgrade; '' close; }
+    
+      server {
+        listen 9223;
+    
+        location / {
+          proxy_pass http://127.0.0.1:9222;
+          proxy_http_version 1.1;
+    
+          # Critical for Chrome CDP
+          proxy_set_header Host localhost;
+    
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+        }
+    
+        location = /healthz {
+          return 200 'ok';
+          add_header Content-Type text/plain;
+        }
+      }
+    }
+
+---
+# =========================================
+# 4) Deployment: Chrome (headless new) + nginx proxy sidecar
+#    - Chrome binds to 127.0.0.1:9222 (new headless restriction)
+#    - nginx exposes 9223 and proxies to 127.0.0.1:9222
+# =========================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chrome-cdp-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chrome-cdp-proxy
+  template:
+    metadata:
+      labels:
+        app: chrome-cdp-proxy
+    spec:
+      containers:
+        - name: chrome
+          image: image-registry.openshift-image-registry.svc:5000/kallepelli-rupesh-dev/jdk17-chrome:latest
+          command: ["/bin/sh","-c"]
+          args:
+            - >
+              getent passwd "$(id -u)" >/dev/null
+              || echo "default:x:$(id -u):0::/home/default:/sbin/nologin" >> /etc/passwd;
+              mkdir -p /tmp/chrome;
+              /opt/chrome/chrome-linux64/chrome --headless=new --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1 --no-first-run --no-default-browser-check --disable-extensions --disable-default-apps --disable-background-networking --disable-component-update --disable-gpu --disable-dev-shm-usage --disable-features=Vulkan --use-gl=swiftshader --user-data-dir=/tmp/chrome --log-level=3 --no-sandbox;
+              sleep infinity;
+          ports:
+            - containerPort: 9222
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -lc
+                - wget -qO- http://127.0.0.1:9222/json/version | grep -q webSocketDebuggerUrl
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: chrome-data
+              mountPath: /tmp/chrome
+        - name: nginx
+          image: registry.access.redhat.com/ubi9/nginx-120
+          command: [ "nginx" ]
+          args: [ "-g","daemon off;" ]
+          ports:
+            - containerPort: 9223
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9223
+            initialDelaySeconds: 2
+            periodSeconds: 4
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9223
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+        - name: chrome-data
+          emptyDir: {}
+        - name: nginx-conf
+          configMap:
+            name: nginx-proxy-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+---
+# =========================================
+# 5) Service + Route to expose nginx externally on 9223
+# =========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdp-proxy-svc
+spec:
+  selector:
+    app: chrome-cdp-proxy
+  ports:
+    - name: cdp
+      port: 9223
+      targetPort: 9223
+      protocol: TCP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: cdp-proxy
+spec:
+  to:
+    kind: Service
+    name: cdp-proxy-svc
+  port:
+    targetPort: cdp
+  tls:
+    termination: edge
+---

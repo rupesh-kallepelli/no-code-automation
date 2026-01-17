@@ -29,7 +29,7 @@ public class ChromeLauncherService implements BrowserService {
 
         ChromeLauncher chromeLauncher = ChromeLauncher.builder()
                 .userDataDir(userDir + "/chrome-profiles/" + UUID.randomUUID())
-                .headless(false)
+                .headless(true)
                 .remoteDebuggingAddress("127.0.0.1")
                 .remoteDebuggingPort(port)
                 .build();

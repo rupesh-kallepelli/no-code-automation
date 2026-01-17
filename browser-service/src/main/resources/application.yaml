@@ -6,3 +6,4 @@ server:
 #logging:
 #  level:
 #    root: debug
+# ws://host:9223/session/{sessionId}/devtools/browser/<browser-uuid>

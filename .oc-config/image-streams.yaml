@@ -70,6 +70,59 @@ spec:
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
+  name: nginx
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: nginx
+spec:
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
+  
+      USER 0
+      
+      RUN microdnf install -y \
+        gcc gcc-c++ make \
+        wget tar gzip \
+        pcre-devel openssl-devel zlib-devel \
+        perl \
+        && microdnf clean all
+      
+      WORKDIR /opt
+      
+      RUN wget https://openresty.org/download/openresty-1.21.4.1.tar.gz \
+        && tar xzf openresty-1.21.4.1.tar.gz \
+        && cd openresty-1.21.4.1 \
+        && ./configure \
+        --with-luajit \
+        --with-http_ssl_module \
+        --with-http_v2_module \
+        --with-http_stub_status_module \
+        && make -j$(nproc) \
+        && make install \
+        && cd / \
+        && rm -rf /opt/openresty-1.21.4.1*
+      
+      ENV PATH="/usr/local/openresty/nginx/sbin:/usr/local/openresty/luajit/bin:${PATH}"
+      
+      RUN mkdir -p /usr/local/openresty/nginx/logs \
+        && chgrp -R 0 /usr/local/openresty \
+        && chmod -R g+rwX /usr/local/openresty
+      
+      CMD ["nginx", "-g", "daemon off;"]
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: nginx:latest
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
   name: springboot-b2i
 ---
 apiVersion: image.openshift.io/v1

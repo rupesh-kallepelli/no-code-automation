@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.launcher.v1.BrowserDetails;
 import com.vr.launcher.v1.BrowserLauncher;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -53,6 +55,8 @@ public class ChromeLauncher implements BrowserLauncher {
         cmd.add("--disable-features=Vulkan");
         cmd.add("--use-gl=swiftshader");
         cmd.add("--log-level=3");
+        cmd.add("--enable-logging=stderr");
+        cmd.add("--v=1");
         cmd.add("--remote-debugging-address=127.0.0.1");
 
         if (headless) {
@@ -71,6 +75,18 @@ public class ChromeLauncher implements BrowserLauncher {
         Process process = new ProcessBuilder(cmd)
                 .redirectErrorStream(true)
                 .start();
+
+        new Thread(() -> {
+            try {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }).start();
 
         return new ChromeDetails(waitForFirstPageWs(), Instant.now().toEpochMilli(), process, userDataDir);
     }

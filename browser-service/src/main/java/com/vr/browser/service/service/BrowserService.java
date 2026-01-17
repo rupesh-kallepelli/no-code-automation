@@ -10,10 +10,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public interface BrowserService {
-    Map<Long, BrowserDetails> processMap = new HashMap<>();
+    Map<Long, BrowserDetails> PROCESS_CACHE = new HashMap<>();
 
     static void killBrowserProcess(Long id) {
-        BrowserDetails details = processMap.get(id);
+        BrowserDetails details = PROCESS_CACHE.get(id);
         if (Objects.nonNull(details)) {
             details.getProcess().destroyForcibly();
             details.getUsrDir().delete();
@@ -21,8 +21,18 @@ public interface BrowserService {
         }
     }
 
+    static void killAll() {
+        PROCESS_CACHE.forEach((id, details) -> {
+            if (Objects.nonNull(details)) {
+                details.getProcess().destroyForcibly();
+                details.getUsrDir().delete();
+                BrowserLauncher.cleanWSUrl(details.getWsUrl());
+            }
+        });
+    }
+
     static void addNewBrowserProcess(Long id, BrowserDetails browserDetails) {
-        processMap.put(id, browserDetails);
+        PROCESS_CACHE.put(id, browserDetails);
     }
 
     BrowserSessionResponse launchBrowser(BrowserRequest browserRequest) throws Exception;

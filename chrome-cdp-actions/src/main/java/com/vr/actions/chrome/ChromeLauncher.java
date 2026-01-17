@@ -25,7 +25,7 @@ public class ChromeLauncher implements BrowserLauncher {
     private File userDataDir;
     private List<String> extraArgs;
     private boolean enableScreenCasting = false;
-    private BroadCaster broadCaster;
+    private final BroadCaster broadCaster;
     private String websocketUrl;
 
     private ChromeLauncher(Builder b) {

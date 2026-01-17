@@ -42,4 +42,16 @@ public class BrowserController {
         BrowserService.killBrowserProcess(id);
         return ResponseEntity.ok("Closed the session with id : " + id);
     }
+
+    @DeleteMapping("/close-all")
+    public ResponseEntity<?> closeSessions() {
+        BrowserService.killAll();
+        return ResponseEntity.ok("Closed all Sessions");
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<?> sessions() {
+        return ResponseEntity.ok(BrowserService.PROCESS_CACHE);
+    }
+
 }

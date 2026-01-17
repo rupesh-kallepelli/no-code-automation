@@ -2,4 +2,7 @@ spring:
   application:
     name: browser-service
 server:
-  port: 9999
+  port: 8080
+#logging:
+#  level:
+#    root: debug

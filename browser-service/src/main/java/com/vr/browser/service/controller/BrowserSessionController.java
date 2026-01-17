@@ -2,6 +2,7 @@ package com.vr.browser.service.controller;
 
 import com.vr.browser.service.request.BrowserRequest;
 import com.vr.browser.service.response.BrowserSessionResponse;
+import com.vr.browser.service.response.SessionDeleteResponse;
 import com.vr.browser.service.service.BrowserFactory;
 import com.vr.browser.service.service.BrowserService;
 import jakarta.validation.Valid;
@@ -10,17 +11,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
-public class BrowserController {
+public class BrowserSessionController {
     private final BrowserFactory browserFactory;
 
-    public BrowserController(BrowserFactory browserFactory) {
+    public BrowserSessionController(BrowserFactory browserFactory) {
         this.browserFactory = browserFactory;
     }
 
-    @PostMapping("/create")
+    @PostMapping("/sessions")
     public ResponseEntity<?> createSession(@RequestBody @Valid BrowserRequest browserRequest) {
 
         log.debug("Received browser request : {}", browserRequest);
@@ -37,13 +41,13 @@ public class BrowserController {
 
     }
 
-    @DeleteMapping("/close")
-    public ResponseEntity<?> closeSession(@RequestParam Long id) {
-        BrowserService.killBrowserProcess(id);
-        return ResponseEntity.ok("Closed the session with id : " + id);
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<?> closeSession(@PathVariable String sessionId) {
+        BrowserService.killBrowserProcess(Long.valueOf(sessionId));
+        return ResponseEntity.ok(new SessionDeleteResponse(Long.valueOf(sessionId), "terminated"));
     }
 
-    @DeleteMapping("/close-all")
+    @DeleteMapping("/sessions/all")
     public ResponseEntity<?> closeSessions() {
         BrowserService.killAll();
         return ResponseEntity.ok("Closed all Sessions");
@@ -51,7 +55,11 @@ public class BrowserController {
 
     @GetMapping("/sessions")
     public ResponseEntity<?> sessions() {
-        return ResponseEntity.ok(BrowserService.PROCESS_CACHE);
+        Map<String, String> sessionMap = new HashMap<>();
+        BrowserService.PROCESS_CACHE.forEach((aLong, browserDetails) ->
+                sessionMap.put(String.valueOf(aLong), browserDetails.getAddress() + ":" + browserDetails.getPort())
+        );
+        return ResponseEntity.ok(sessionMap);
     }
 
 }

@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.launcher.v1.BrowserDetails;
 import com.vr.launcher.v1.BrowserLauncher;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -23,6 +25,7 @@ public class ChromeLauncher implements BrowserLauncher {
     private final int remoteDebuggingPort;
     private final File userDataDir;
     private final List<String> extraArgs;
+    private final String remoteDebuggingAddress;
 
     private ChromeLauncher(Builder b) {
         this.chromeBinary = resolveChromeBinary(b.binaryPath);
@@ -30,8 +33,8 @@ public class ChromeLauncher implements BrowserLauncher {
         this.remoteDebuggingPort = b.remoteDebuggingPort;
         this.userDataDir = b.userDataDir;
         this.extraArgs = b.extraArgs;
+        this.remoteDebuggingAddress = b.remoteDebuggingAddress;
     }
-
 
     public ChromeDetails launch() throws Exception {
 
@@ -55,7 +58,7 @@ public class ChromeLauncher implements BrowserLauncher {
         cmd.add("--log-level=3");
         cmd.add("--enable-logging=stderr");
         cmd.add("--v=1");
-        cmd.add("--remote-debugging-address=127.0.0.1");
+        cmd.add("--remote-debugging-address=" + remoteDebuggingAddress);
         cmd.add("--window-size=1920,1080");
 
         if (headless) {
@@ -71,11 +74,30 @@ public class ChromeLauncher implements BrowserLauncher {
 
         cmd.addAll(extraArgs);
 
-        Process process = new ProcessBuilder(cmd)
-                .redirectErrorStream(true)
-                .start();
+        Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
 
-        return new ChromeDetails(waitForFirstPageWs(), Instant.now().toEpochMilli(), process, userDataDir);
+        var loggerThread = new Thread(() -> {
+            try {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        });
+        loggerThread.setDaemon(true);
+        loggerThread.start();
+
+        return new ChromeDetails(
+                waitForFirstPageWs(),
+                Instant.now().toEpochMilli(),
+                process,
+                userDataDir,
+                remoteDebuggingAddress,
+                remoteDebuggingPort
+        );
     }
 
     /* ------------------ CDP Discovery ------------------ */
@@ -179,6 +201,7 @@ public class ChromeLauncher implements BrowserLauncher {
         private boolean headless = false;
         private int remoteDebuggingPort = 9222;
         private File userDataDir;
+        private String remoteDebuggingAddress = "127.0.0.1";
         private final List<String> extraArgs = new ArrayList<>();
 
 
@@ -192,6 +215,10 @@ public class ChromeLauncher implements BrowserLauncher {
             return this;
         }
 
+        public Builder remoteDebuggingAddress(String address) {
+            this.remoteDebuggingAddress = address;
+            return this;
+        }
         public Builder remoteDebuggingPort(int port) {
             this.remoteDebuggingPort = port;
             return this;
@@ -218,27 +245,51 @@ public class ChromeLauncher implements BrowserLauncher {
         private final Long id;
         private final Process process;
         private final File usrDir;
+        private final String address;
+        private final int port;
 
-        public ChromeDetails(String wsUrl, long epochMilli, Process process, File usrDir) {
+        public ChromeDetails(
+                String wsUrl,
+                long epochMilli,
+                Process process,
+                File usrDir,
+                String address,
+                int port
+        ) {
             this.wsUrl = wsUrl;
             this.id = epochMilli;
             this.process = process;
             this.usrDir = usrDir;
+            this.address = address;
+            this.port = port;
         }
 
+        @Override
         public String getWsUrl() {
             return wsUrl;
         }
 
+        @Override
+        public int getPort() {
+            return port;
+        }
 
+        @Override
+        public String getAddress() {
+            return address;
+        }
+
+        @Override
         public Long getId() {
             return id;
         }
 
+        @Override
         public Process getProcess() {
             return process;
         }
 
+        @Override
         public File getUsrDir() {
             return usrDir;
         }

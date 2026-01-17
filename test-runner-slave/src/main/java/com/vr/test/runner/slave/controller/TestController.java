@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("api/v1")
 public class TestController {
@@ -26,8 +28,16 @@ public class TestController {
     public ResponseEntity<?> runTest() throws Exception {
         TestService testService = testServiceFactory.getTestService(Browser.CHROME);
         Page page = testService.launch();
-        page.navigate("http://example.com");
-        testService.close(page.getId());
+        page.navigate("https://opensource-demo.orangehrmlive.com/");
+        page.type("input[name='username']", "Admin");
+        page.screenshot("screenshots/" + UUID.randomUUID() + ".png");
+        Thread.sleep(5000);
+        page.type("input[name='password']", "admin123");
+        Thread.sleep(5000);
+        page.screenshot("screenshots/" + UUID.randomUUID() + ".png");
+//        page.click("button[type='submit']");
+//        Thread.sleep(5000);
+//        testService.close(page.getId());
         return ResponseEntity.ok().body("Test Completed");
     }
 

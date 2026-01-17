@@ -29,6 +29,7 @@ public interface BrowserService {
                 BrowserLauncher.cleanWSUrl(details.getWsUrl());
             }
         });
+        PROCESS_CACHE.clear();
     }
 
     static void addNewBrowserProcess(Long id, BrowserDetails browserDetails) {

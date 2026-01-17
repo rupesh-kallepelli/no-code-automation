@@ -10,4 +10,8 @@ public interface BrowserDetails {
     Process getProcess();
 
     File getUsrDir();
+
+    String getAddress();
+
+    int getPort();
 }

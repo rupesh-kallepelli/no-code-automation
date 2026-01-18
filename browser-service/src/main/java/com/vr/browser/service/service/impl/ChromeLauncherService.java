@@ -18,13 +18,16 @@ public class ChromeLauncherService implements BrowserService {
 
     private final String userDir;
     private final String cdpWSHost;
+    private final boolean headless;
 
     public ChromeLauncherService(
             @Value("${user.dir}") String userDir,
-            @Value("${cdp.ws.host}") String cdpWSHost
+            @Value("${cdp.ws.host}") String cdpWSHost,
+            @Value("${browser.mode}") boolean headless
     ) {
         this.userDir = userDir;
         this.cdpWSHost = cdpWSHost;
+        this.headless = headless;
     }
 
     @Override
@@ -37,7 +40,7 @@ public class ChromeLauncherService implements BrowserService {
 
         ChromeLauncher chromeLauncher = ChromeLauncher.builder()
                 .userDataDir(userDir + "/chrome-profiles/" + UUID.randomUUID())
-                .headless(false)
+                .headless(headless)
                 .remoteDebuggingAddress("127.0.0.1")
                 .remoteDebuggingPort(port)
                 .build();

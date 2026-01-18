@@ -81,7 +81,7 @@ public class ChromeLauncher implements BrowserLauncher {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
-                    System.out.println(line);
+//                    System.out.println(line);
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -242,7 +242,7 @@ public class ChromeLauncher implements BrowserLauncher {
 
     public static class ChromeDetails implements BrowserDetails {
         private final String wsUrl;
-        private final Long id;
+        private final String id;
         private final Process process;
         private final File usrDir;
         private final String address;
@@ -257,7 +257,7 @@ public class ChromeLauncher implements BrowserLauncher {
                 int port
         ) {
             this.wsUrl = wsUrl;
-            this.id = epochMilli;
+            this.id = String.valueOf(epochMilli);
             this.process = process;
             this.usrDir = usrDir;
             this.address = address;
@@ -280,7 +280,7 @@ public class ChromeLauncher implements BrowserLauncher {
         }
 
         @Override
-        public Long getId() {
+        public String getId() {
             return id;
         }
 

@@ -5,7 +5,7 @@ import java.io.File;
 public interface BrowserDetails {
     String getWsUrl();
 
-    Long getId();
+    String getId();
 
     Process getProcess();
 

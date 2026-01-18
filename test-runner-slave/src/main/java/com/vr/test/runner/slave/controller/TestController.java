@@ -35,9 +35,9 @@ public class TestController {
         page.type("input[name='password']", "admin123");
         Thread.sleep(5000);
         page.screenshot("screenshots/" + UUID.randomUUID() + ".png");
-//        page.click("button[type='submit']");
-//        Thread.sleep(5000);
-//        testService.close(page.getId());
+        page.click("button[type='submit']");
+        Thread.sleep(5000);
+        testService.close(page.getId());
         return ResponseEntity.ok().body("Test Completed");
     }
 

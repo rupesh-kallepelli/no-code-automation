@@ -1,3 +1,28 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: jdk17-slim
+spec:
+  tags:
+    - name: latest
+      annotations:
+        description: "OpenJDK 17 slim base image from Docker Hub"
+      from:
+        kind: DockerImage
+        name: registry.access.redhat.com/ubi8/openjdk-17:1.17-1
+      importPolicy:
+        scheduled: true
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: jdk17-chrome
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: browser-service
+---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
@@ -47,9 +72,6 @@ output:
     kind: ImageStreamTag
     name: jdk17-chrome:latest
 ---
-# =========================================
-# 3) ConfigMap: nginx reverse proxy (listens 9223 -> proxies to Chrome 127.0.0.1:xxxx)
-# =========================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -138,134 +160,21 @@ data:
     }
 
 ---
-# =========================================
-# 4) Deployment: Chrome (headless new) + nginx proxy sidecar
-#    - Chrome binds to 127.0.0.1:9222 (new headless restriction)
-#    - nginx exposes 9223 and proxies to 127.0.0.1:9222
-# =========================================
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: browser-service
-  namespace: kallepallirupesh-dev
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: browser-service
-  template:
-    metadata:
-      labels:
-        app: browser-service
-    spec:
-      # Pod-level securityContext (fsGroup applies to all containers)
-      securityContext:
-        runAsNonRoot: true
-      containers:
-        - name: browser-service
-          image: 'image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/browser-service:latest'
-          ports:
-            - containerPort: 9999
-            - containerPort: 9222
-          securityContext:
-            runAsNonRoot: false
-            allowPrivilegeEscalation: false
-            capabilities:
-              add:
-                - NET_BIND_SERVICE
-          volumeMounts:
-            - name: dshm
-              mountPath: /dev/shm
-            - name: chrome-data
-              mountPath: /tmp/chrome
-        - name: nginx
-          image: 'registry.access.redhat.com/ubi9/nginx-120'
-          command:
-            - "/usr/local/openresty/bin/openresty"
-          args:
-            - "-g"
-            - "daemon off;"
-            - "-c"
-            - "/usr/local/openresty/nginx/conf/nginx.conf"
-          ports:
-            - containerPort: 9223
-          securityContext:
-            runAsNonRoot: true
-          volumeMounts:
-            - name: nginx-conf
-              mountPath: /usr/local/openresty/nginx/conf/nginx.conf
-              subPath: nginx.conf
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 9223
-            initialDelaySeconds: 2
-            periodSeconds: 4
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 9223
-            initialDelaySeconds: 10
-            periodSeconds: 10
-      volumes:
-        - name: dshm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 1Gi
-        - name: chrome-data
-          emptyDir: { }
-        - name: nginx-conf
-          configMap:
-            name: browser-service-nginx-conf
-            items:
-              - key: nginx.conf
-                path: nginx.conf
-
 ---
-# =========================================
-# 5) Service + Route to expose nginx externally on 9223
-# =========================================
-apiVersion: v1
-kind: Service
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
 metadata:
   name: browser-service
 spec:
-  selector:
-    app: browser-service
-  ports:
-    - name: cdp
-      port: 9223
-      targetPort: 9223
-      protocol: TCP
-    - name: http
-      port: 9999
-      targetPort: 9999
-      protocol: TCP
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: browser-service
-spec:
-  to:
-    kind: Service
-    name: browser-service
-  port:
-    targetPort: http
-  tls:
-    termination: edge
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: browser-service-cdp
-spec:
-  to:
-    kind: Service
-    name: browser-service
-  port:
-    targetPort: cdp
-  tls:
-    termination: edge
----
+  source:
+    type: Binary
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: jdk17-chrome:latest
+  output:
+    to:
+      kind: ImageStreamTag
+      name: browser-service:latest

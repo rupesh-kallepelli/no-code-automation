@@ -90,35 +90,40 @@ spec:
         pcre-devel openssl-devel zlib-devel \
         perl \
         && microdnf clean all
-      
+
       WORKDIR /opt
       
       RUN wget https://openresty.org/download/openresty-1.21.4.1.tar.gz \
-        && tar xzf openresty-1.21.4.1.tar.gz \
-        && cd openresty-1.21.4.1 \
-        && ./configure \
-        --with-luajit \
-        --with-http_ssl_module \
-        --with-http_v2_module \
-        --with-http_stub_status_module \
-        && make -j$(nproc) \
-        && make install \
-        && cd / \
-        && rm -rf /opt/openresty-1.21.4.1*
-      
-      ENV PATH="/usr/local/openresty/nginx/sbin:/usr/local/openresty/luajit/bin:${PATH}"
-      
-      RUN mkdir -p /usr/local/openresty/nginx/logs \
-        && chgrp -R 0 /usr/local/openresty \
-        && chmod -R g+rwX /usr/local/openresty
-      
-      CMD ["nginx", "-g", "daemon off;"]
+          && tar xzf openresty-1.21.4.1.tar.gz \
+          && cd openresty-1.21.4.1 \
+          && ./configure \
+              --with-luajit \
+              --with-http_ssl_module \
+              --with-http_v2_module \
+              --with-http_stub_status_module \
+          && make -j$(nproc) \
+          && make install \
+          && cd / \
+          && rm -rf /opt/openresty-1.21.4.1*
+
+      ENV PATH="/usr/local/openresty/bin:/usr/local/openresty/luajit/bin:${PATH}"
+      RUN mkdir -p /usr/local/openresty/nginx/logs   \
+          && chown -R 1001:0 /usr/local/openresty \
+          && chmod -R g+rwX /usr/local/openresty
+
+      USER 1001
+      CMD ["/usr/local/openresty/bin/openresty", "-g", "daemon off;"]
   strategy:
     type: Docker
   output:
     to:
       kind: ImageStreamTag
       name: nginx:latest
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: browser-service
 ---
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -147,9 +152,4 @@ spec:
     to:
       kind: ImageStreamTag
       name: springboot-b2i:latest
----
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: browser-service
 ---

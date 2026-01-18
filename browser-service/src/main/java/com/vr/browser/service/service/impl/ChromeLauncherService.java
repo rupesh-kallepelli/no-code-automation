@@ -16,8 +16,16 @@ import java.util.UUID;
 @Slf4j
 public class ChromeLauncherService implements BrowserService {
 
-    @Value("${user.dir}")
-    private String userDir;
+    private final String userDir;
+    private final String cdpWSHost;
+
+    public ChromeLauncherService(
+            @Value("${user.dir}") String userDir,
+            @Value("${cdp.ws.host}") String cdpWSHost
+    ) {
+        this.userDir = userDir;
+        this.cdpWSHost = cdpWSHost;
+    }
 
     @Override
     public BrowserSessionResponse launchBrowser(BrowserRequest browserRequest) throws Exception {
@@ -29,7 +37,7 @@ public class ChromeLauncherService implements BrowserService {
 
         ChromeLauncher chromeLauncher = ChromeLauncher.builder()
                 .userDataDir(userDir + "/chrome-profiles/" + UUID.randomUUID())
-                .headless(true)
+                .headless(false)
                 .remoteDebuggingAddress("127.0.0.1")
                 .remoteDebuggingPort(port)
                 .build();
@@ -37,11 +45,12 @@ public class ChromeLauncherService implements BrowserService {
         ChromeLauncher.ChromeDetails chromeDetails = chromeLauncher.launch();
         BrowserService.addNewBrowserProcess(chromeDetails.getId(), chromeDetails);
 
+        String reWrittenUrl = replaceHostAndPort(chromeDetails.getWsUrl(), cdpWSHost, port);
         return new BrowserSessionResponse(
-                chromeDetails.getId().toString(),
+                chromeDetails.getId(),
                 BrowserType.CHROME,
-                chromeDetails.getWsUrl(),
-                chromeDetails.getAddress(),
+                reWrittenUrl,
+                cdpWSHost + "/proxy/" + port + "/",
                 port
         );
     }

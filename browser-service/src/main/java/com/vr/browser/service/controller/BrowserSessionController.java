@@ -36,7 +36,7 @@ public class BrowserSessionController {
         } catch (Exception e) {
             log.error("Couldn't start the browser session", e);
             return ResponseEntity.internalServerError()
-                    .body("Couldn't start the browser session : " + e.getMessage());
+                                                                                                                                                                                                                                                                                                                                                                                                     .body("Couldn't start the browser session : " + e.getMessage());
         }
 
     }

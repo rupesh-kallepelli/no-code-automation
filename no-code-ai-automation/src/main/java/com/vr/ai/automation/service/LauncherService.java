@@ -18,10 +18,11 @@ public class LauncherService {
 
     public Page getChromeInstance(boolean broadCast) throws Exception {
         ChromeLauncher.Builder chromeLauncher = ChromeLauncher.builder()
-                .headless(false)
-                .remoteWebSocket(
-                        "wss://cdp-proxy-svc-kallepelli-rupesh-dev.apps.rm1.0a51.p1.openshiftapps.com/devtools/page/32DA44E9868D3500D8BD34C308619DD4"
-                );
+                .headless(true)
+                .remoteDebuggingPort(1000);
+//                .remoteWebSocket(
+//                        "wss://cdp-proxy-svc-kallepelli-rupesh-dev.apps.rm1.0a51.p1.openshiftapps.com/devtools/page/32DA44E9868D3500D8BD34C308619DD4"
+//                );
 //                .userDataDir("tmp/profile")
 //                .binaryPath("C:\\Users\\kalle\\Softwares\\chrome-v143.0.7499.192\\chrome-win64\\chrome.exe")
 //                .remoteDebuggingPort(9222);

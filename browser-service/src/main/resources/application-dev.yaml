@@ -11,7 +11,7 @@ server:
 
 cdp:
   ws:
-    host: browser-service-cdp-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
+    host: localhost
 
 #logging:
 #  level:

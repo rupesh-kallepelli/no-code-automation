@@ -14,7 +14,7 @@ public class EdgeTestService extends ChromiumTestService {
     }
 
     @Override
-    public void close(Long id) {
+    public void close(String id) {
         throw new RuntimeException("Edge is not supported currently");
     }
 }

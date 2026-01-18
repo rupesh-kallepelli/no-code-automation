@@ -9,7 +9,6 @@ import com.vr.cdp.protocol.command.page.PageScreencastFrameAck;
 public class ScreenCastClient extends RawCDPClient {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    //    private final ScreencastImageSaver imageSaver;
     private final BroadCaster broadCaster;
 
     public ScreenCastClient(String wsUrl, BroadCaster broadCaster) throws Exception {

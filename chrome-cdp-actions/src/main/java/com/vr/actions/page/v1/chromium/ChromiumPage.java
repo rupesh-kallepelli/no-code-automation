@@ -14,14 +14,14 @@ import java.util.Base64;
 import java.util.Objects;
 
 public class ChromiumPage implements Page {
-    private final Long id;
+    private final String id;
     private final CDPClient client;
     private final DOMActions dom;
     private final InputActions input;
     private BroadCaster broadCaster;
 
     public ChromiumPage(
-            Long id,
+            String id,
             String pageWs
     ) throws Exception {
         this.id = id;
@@ -32,7 +32,7 @@ public class ChromiumPage implements Page {
 
 
     public ChromiumPage(
-            Long id,
+            String id,
             String pageWs,
             boolean enableBroadCasting,
             BroadCaster broadCaster
@@ -50,7 +50,7 @@ public class ChromiumPage implements Page {
 
 
     @Override
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
@@ -85,8 +85,7 @@ public class ChromiumPage implements Page {
 
     @Override
     public void screenshot(String file) throws Exception {
-        var result =
-                client.sendAndWait(new PageCaptureScreenshot("png"));
+        var result = client.sendAndWait(new PageCaptureScreenshot("png"));
         ScreenshotUtil.saveBase64Image(result.data(), file);
     }
 

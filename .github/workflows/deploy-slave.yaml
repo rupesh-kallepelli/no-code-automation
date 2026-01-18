@@ -2,6 +2,14 @@ name: Building and Deploying slave
 
 on:
   workflow_dispatch:
+    inputs:
+      service:
+       description: "Select service to deploy"
+       required: true
+       type: choice
+       options:
+         - browser-service
+         - test-runner-slave
   push:
     branches: [ main ]
 
@@ -59,10 +67,10 @@ jobs:
           cd ..
           echo " ------------------------------------------------------------------------Build Successfully for chrome-cdp-actions ------------------------------------------------------------------------"
 
-      - name: Build browser-service
+      - name: Build ${{ github.event.inputs.service }}
         run: |
           echo "------------------------------------------------------------------------Building browser-service------------------------------------------------------------------------"
-          cd ./browser-service
+          cd ./${{ github.event.inputs.service }}
           chmod +x ./mvnw
           ./mvnw clean install -DskipTests
 
@@ -88,6 +96,6 @@ jobs:
             --token=${{ secrets.OPENSHIFT_TOKEN }} \
             --insecure-skip-tls-verify
 
-      - name: Build browser-service
+      - name: Build ${{ github.event.inputs.service }}
         run: |
-          oc start-build browser-service --from-file=./browser-service/app.jar --follow
+          oc start-build ${{ github.event.inputs.service }} --from-file=./${{ github.event.inputs.service }}/app.jar --follow

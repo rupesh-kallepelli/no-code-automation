@@ -1,7 +1,7 @@
 package com.vr.actions.page.v1;
 
 public interface Page {
-    Long getId();
+    String getId();
 
     void enable() throws Exception;
 

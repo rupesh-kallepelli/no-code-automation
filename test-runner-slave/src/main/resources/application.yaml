@@ -2,4 +2,4 @@ spring:
   application:
     name: test-runner-slave
 browser:
-  service: http://localhost:9999
+  service: https://browser-service-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com

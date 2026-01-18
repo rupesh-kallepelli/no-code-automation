@@ -7,8 +7,8 @@ import com.vr.test.runner.slave.service.test.TestService;
 import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -20,25 +20,31 @@ public class TestController {
     private TestServiceFactory testServiceFactory;
 
     @PostMapping("run")
-    public ResponseEntity<?> runTest(@RequestBody @Valid TestPlan testPlan) {
-        return ResponseEntity.ok().body("Test started");
+    public Mono<?> runTest(@RequestBody @Valid TestPlan testPlan) {
+        return Mono.just("Test started");
     }
 
     @GetMapping("test-run")
-    public ResponseEntity<?> runTest() throws Exception {
+    public Mono<?> runTest() throws Exception {
         TestService testService = testServiceFactory.getTestService(Browser.CHROME);
         Page page = testService.launch();
+        page.cast(
+                "jpeg",
+                50,
+                1920,
+                1080
+        );
+        UUID uuid = UUID.randomUUID();
         page.navigate("https://opensource-demo.orangehrmlive.com/");
         page.type("input[name='username']", "Admin");
-        page.screenshot("screenshots/" + UUID.randomUUID() + ".png");
-        Thread.sleep(5000);
+        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
         page.type("input[name='password']", "admin123");
-        Thread.sleep(5000);
-        page.screenshot("screenshots/" + UUID.randomUUID() + ".png");
+        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
         page.click("button[type='submit']");
         Thread.sleep(5000);
+        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
         testService.close(page.getId());
-        return ResponseEntity.ok().body("Test Completed");
+        return Mono.just("Test Completed");
     }
 
 }

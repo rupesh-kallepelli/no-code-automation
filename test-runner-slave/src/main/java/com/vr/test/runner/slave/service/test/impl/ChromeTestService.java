@@ -5,6 +5,7 @@ import com.vr.actions.page.v1.chromium.ChromiumPage;
 import com.vr.test.runner.slave.browser.request.BrowserRequest;
 import com.vr.test.runner.slave.browser.request.BrowserType;
 import com.vr.test.runner.slave.browser.response.BrowserSessionResponse;
+import com.vr.test.runner.slave.util.ScreencastBroadcaster;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,35 +18,34 @@ import java.util.Objects;
 @RequestScope
 public class ChromeTestService extends ChromiumTestService {
 
-    private WebClient browserClient;
+    private final WebClient browserClient;
+    private final ScreencastBroadcaster screencastBroadcaster;
 
-    public ChromeTestService(@Qualifier("browserClient") WebClient browserClient) {
+    public ChromeTestService(
+            @Qualifier("browserClient") WebClient browserClient,
+            ScreencastBroadcaster screencastBroadcaster
+    ) {
         this.browserClient = browserClient;
+        this.screencastBroadcaster = screencastBroadcaster;
     }
 
     @Override
     public Page launch() {
         try {
-//            BrowserSessionResponse browserSessionResponse = Objects.requireNonNull(browserClient.post()
-//                            .uri("/api/v1/sessions")
-//                            .bodyValue(new BrowserRequest(BrowserType.CHROME))
-//                            .retrieve()
-//                            .toEntity(BrowserSessionResponse.class)
-//                            .block())
-//                    .getBody();
-//            String websocketUrl = browserSessionResponse.wsUrl();
-//            return new ChromiumPage(
-//                    Long.valueOf(browserSessionResponse.sessionId()),
-//                    websocketUrl,
-//                    false,
-//                    null
-//            );
-            String websocketUrl = "wss://cdp-proxy-svc-kallepelli-rupesh-dev.apps.rm1.0a51.p1.openshiftapps.com/devtools/page/2A7864643179B83370CBB7336DBA71EA";
+            BrowserSessionResponse browserSessionResponse = Objects.requireNonNull(browserClient.post()
+                            .uri("/api/v1/sessions")
+                            .bodyValue(new BrowserRequest(BrowserType.CHROME))
+                            .retrieve()
+                            .toEntity(BrowserSessionResponse.class)
+                            .block())
+                    .getBody();
+            assert browserSessionResponse != null;
+            String websocketUrl = browserSessionResponse.wsUrl().replace("ws://", "wss://");
             return new ChromiumPage(
-                    000L,
+                    browserSessionResponse.sessionId(),
                     websocketUrl,
-                    false,
-                    null
+                    true,
+                    screencastBroadcaster
             );
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -53,7 +53,7 @@ public class ChromeTestService extends ChromiumTestService {
     }
 
     @Override
-    public void close(Long id) {
+    public void close(String id) {
         ResponseEntity<Void> block = browserClient.delete()
                 .uri("/api/v1/sessions/" + id)
                 .retrieve()

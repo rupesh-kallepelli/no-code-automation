@@ -14,7 +14,7 @@ import java.util.Objects;
 public interface BrowserService {
     Map<String, BrowserDetails> PROCESS_CACHE = new HashMap<>();
 
-    static void killBrowserProcess(Long id) {
+    static void killBrowserProcess(String id) {
         BrowserDetails details = PROCESS_CACHE.get(id);
         if (Objects.nonNull(details)) {
             details.getProcess().destroyForcibly();
@@ -50,8 +50,15 @@ public interface BrowserService {
 
         URI originalUri = new URI(originalUrl);
 
+        String scheme = originalUri.getScheme();
+        if ("ws".equalsIgnoreCase(scheme)) {
+            scheme = "wss";
+        } else if ("http".equalsIgnoreCase(scheme)) {
+            scheme = "https";
+        }
+
         URI updatedUri = new URI(
-                originalUri.getScheme(),      // ws / wss / http / https
+                scheme,      // ws / wss / http / https
                 originalUri.getUserInfo(),
                 newHost,
                 -1, //change to newPort in local

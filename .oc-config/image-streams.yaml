@@ -128,6 +128,11 @@ metadata:
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
+  name: test-runner-slave
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
   name: springboot-b2i
 ---
 apiVersion: image.openshift.io/v1

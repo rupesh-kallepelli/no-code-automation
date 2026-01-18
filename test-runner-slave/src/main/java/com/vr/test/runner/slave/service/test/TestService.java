@@ -8,7 +8,7 @@ import java.net.URL;
 public interface TestService {
     Page launch();
 
-    void close(Long id);
+    void close(String id);
 
     void navigate(String url);
 

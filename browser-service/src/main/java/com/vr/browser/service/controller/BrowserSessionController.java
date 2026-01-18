@@ -43,7 +43,7 @@ public class BrowserSessionController {
 
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<?> closeSession(@PathVariable String sessionId) {
-        BrowserService.killBrowserProcess(Long.valueOf(sessionId));
+        BrowserService.killBrowserProcess(sessionId);
         return ResponseEntity.ok(new SessionDeleteResponse(Long.valueOf(sessionId), "terminated"));
     }
 

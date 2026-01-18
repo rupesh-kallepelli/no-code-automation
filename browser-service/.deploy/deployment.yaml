@@ -103,14 +103,6 @@ data:
                 set $forward_path $2;
 
                 # ---------------------------------------
-                # SAFETY GUARD
-                # Allow only a safe port range (recommended)
-                # ---------------------------------------
-                if ($target_port !~ ^4[0-9]{4}$) {
-                    return 403;
-                }
-
-                # ---------------------------------------
                 # Proxy to local Chrome instance
                 # ---------------------------------------
                 proxy_pass http://127.0.0.1:$target_port$forward_path;
@@ -181,20 +173,15 @@ spec:
               mountPath: /tmp/chrome
         - name: nginx
           image: 'registry.access.redhat.com/ubi9/nginx-120'
-          command:
-            - "/usr/local/openresty/bin/openresty"
-          args:
-            - "-g"
-            - "daemon off;"
-            - "-c"
-            - "/usr/local/openresty/nginx/conf/nginx.conf"
+          command: [ "nginx" ]
+          args: [ "-g","daemon off;" ]
           ports:
             - containerPort: 9223
           securityContext:
             runAsNonRoot: true
           volumeMounts:
             - name: nginx-conf
-              mountPath: /usr/local/openresty/nginx/conf/nginx.conf
+              mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
           readinessProbe:
             httpGet:

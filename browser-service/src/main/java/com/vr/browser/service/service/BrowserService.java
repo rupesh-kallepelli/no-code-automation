@@ -55,7 +55,7 @@ public interface BrowserService {
                 originalUri.getUserInfo(),
                 newHost,
                 -1, //change to newPort in local
-                "/proxy/" + newPort + "/" + originalUri.getPath(),
+                "/proxy/" + newPort + originalUri.getPath(),
                 originalUri.getQuery(),
                 originalUri.getFragment()
         );

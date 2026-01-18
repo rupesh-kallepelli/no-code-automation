@@ -81,7 +81,7 @@ public class ChromeLauncher implements BrowserLauncher {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
-//                    System.out.println(line);
+                    System.out.println(line);
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());

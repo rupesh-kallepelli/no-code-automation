@@ -1,0 +1,22 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: test-runner-slave
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: test-runner-slave
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: jdk17-slim:latest
+  output:
+    to:
+      kind: ImageStreamTag
+      name: test-runner-slave:latest

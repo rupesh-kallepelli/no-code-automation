@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-runner-slave
+  namespace: kallepallirupesh-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-runner-slave
+  template:
+    metadata:
+      labels:
+        app: test-runner-slave
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: test-runner-slave
+          image: 'image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/test-runner-slave:latest'
+          ports:
+            - containerPort: 8080
+          securityContext:
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+---
+# =========================================
+# 5) Service + Route to expose nginx externally on 9223
+# =========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-runner-slave
+spec:
+  selector:
+    app: test-runner-slave
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: test-runner-slave
+spec:
+  to:
+    kind: Service
+    name: test-runner-slave
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+---

@@ -9,6 +9,7 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,12 +17,12 @@ import java.util.function.Consumer;
 
 public class RawCDPClient extends WebSocketClient implements CDPClient {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    protected final ObjectMapper mapper = new ObjectMapper();
     private final AtomicInteger idGen = new AtomicInteger(1);
 
     private final Map<Integer, String> responses = new ConcurrentHashMap<>();
-    private final Map<String, Consumer<String>> eventHandlers =
-            new ConcurrentHashMap<>();
+    private final Map<String, Consumer<String>> eventHandlers = new ConcurrentHashMap<>();
+
 
     public RawCDPClient(String wsUrl) throws Exception {
         super(new URI(wsUrl));
@@ -38,6 +39,8 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
         try {
             JsonNode json = mapper.readTree(message);
 
+            System.out.println("==================================Event triggered by cdp==================================");
+            System.out.println(message);
             // Event
             if (json.has("method")) {
                 String method = json.get("method").asText();
@@ -73,13 +76,11 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
         int id = idGen.getAndIncrement();
         command.setId(id);
 
-        String json = mapper.writeValueAsString(
-                Map.of(
-                        "id", command.getId(),
-                        "method", command.getMethod(),
-                        "params", command.getParams()
-                )
-        );
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", command.getId());
+        params.put("method", command.getMethod());
+        params.put("params", command.getParams());
+        String json = mapper.writeValueAsString(params);
 
         send(json);
     }
@@ -88,33 +89,28 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
     public <R> R sendAndWait(CDPCommand<R> command) throws Exception {
         int id = idGen.getAndIncrement();
         command.setId(id);
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", command.getId());
+        params.put("method", command.getMethod());
+        params.put("params", command.getParams());
+        String json = mapper.writeValueAsString(params);
 
-        String json = mapper.writeValueAsString(
-                Map.of(
-                        "id", command.getId(),
-                        "method", command.getMethod(),
-                        "params", command.getParams()
-                )
-        );
+        System.out.println("==================================Sending command==================================");
+        System.out.println(json);
 
         send(json);
-
         // Busy-wait (simple, deterministic)
         while (!responses.containsKey(id)) {
             Thread.sleep(5);
         }
 
         String responseJson = responses.remove(id);
-
-        CDPResponse<R> response = mapper.readValue(responseJson,
-                mapper.getTypeFactory().constructParametricType(CDPResponse.class, command.getResultType())
-        );
+        System.out.println("==================================Received response==================================");
+        System.out.println(responseJson);
+        CDPResponse<R> response = mapper.readValue(responseJson, mapper.getTypeFactory().constructParametricType(CDPResponse.class, command.getResultType()));
 
         if (response.error != null) {
-            throw new RuntimeException(
-                    "CDP Error " + response.error.code +
-                            ": " + response.error.message
-            );
+            throw new RuntimeException("CDP Error " + response.error.code + ": " + response.error.message);
         }
 
         return response.result;

@@ -1,13 +1,10 @@
 package com.vr.cdp.protocol.command.dom;
 
-import java.util.List;
-
-public class DOMGetAttributes
-        extends DOMCommand<DOMGetAttributes.Result> {
+public class DOMGetAttributes extends DOMCommand<DOMGetAttributes.Result> {
 
     private final Params params;
 
-    public DOMGetAttributes(int nodeId) {
+    public DOMGetAttributes(Integer nodeId) {
         super("DOM.getAttributes");
         this.params = new Params(nodeId);
     }
@@ -22,7 +19,13 @@ public class DOMGetAttributes
         return Result.class;
     }
 
-    public record Params(int nodeId) {}
+    /* ---------- Records ---------- */
 
-    public record Result(List<String> attributes) {}
+    public record Params(Integer nodeId) {}
+
+    /**
+     * Returned as a flat list:
+     * [name1, value1, name2, value2, ...]
+     */
+    public record Result(java.util.List<String> attributes) {}
 }

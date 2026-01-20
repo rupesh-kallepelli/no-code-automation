@@ -21,10 +21,7 @@ public class InputActions {
     }
 
     public void click(int nodeId) throws Exception {
-        DOMGetBoxModel.Result box =
-                client.sendAndWait(
-                        new DOMGetBoxModel(nodeId)
-                );
+        DOMGetBoxModel.Result box = client.sendAndWait(new DOMGetBoxModel(nodeId));
 
         List<Double> c = box.model().content();
         double x = (c.get(0) + c.get(4)) / 2;

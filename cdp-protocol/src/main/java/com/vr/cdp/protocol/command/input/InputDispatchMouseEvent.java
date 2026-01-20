@@ -9,8 +9,8 @@ public class InputDispatchMouseEvent extends InputCommand<EmptyResult> {
 
     public InputDispatchMouseEvent(
             String type,
-            double x,
-            double y,
+            Number x,
+            Number y,
             String button,
             int clickCount
     ) {
@@ -30,8 +30,8 @@ public class InputDispatchMouseEvent extends InputCommand<EmptyResult> {
 
     public record Params(
             String type,     // mousePressed, mouseReleased, mouseMoved, mouseWheel
-            double x,
-            double y,
+            Number x,
+            Number y,
             String button,   // left, right, middle, none
             int clickCount
     ) {}

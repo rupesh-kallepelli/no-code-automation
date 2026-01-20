@@ -1,6 +1,6 @@
 package com.vr.test.runner.slave.controller;
 
-import com.vr.actions.page.v1.Page;
+import com.vr.actions.v1.page.Page;
 import com.vr.test.runner.slave.request.TestPlan;
 import com.vr.test.runner.slave.request.enums.Browser;
 import com.vr.test.runner.slave.service.test.TestService;

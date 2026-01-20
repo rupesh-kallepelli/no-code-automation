@@ -1,6 +1,6 @@
 package com.vr.browser.service.service.impl;
 
-import com.vr.actions.chrome.v1.ChromeLauncher;
+import com.vr.actions.v1.chrome.ChromeLauncher;
 import com.vr.browser.service.request.BrowserRequest;
 import com.vr.browser.service.request.BrowserType;
 import com.vr.browser.service.response.BrowserSessionResponse;

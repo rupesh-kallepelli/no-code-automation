@@ -1,6 +1,6 @@
 package com.vr.test.runner.slave.service.test.impl;
 
-import com.vr.actions.page.v1.Page;
+import com.vr.actions.v1.page.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 

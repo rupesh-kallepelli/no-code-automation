@@ -1,6 +1,6 @@
 package com.vr.test.runner.slave.service.test;
 
-import com.vr.actions.page.v1.Page;
+import com.vr.actions.v1.page.Page;
 import com.vr.test.runner.slave.request.Selector;
 
 import java.net.URL;

@@ -1,6 +1,6 @@
 package com.vr.ai.automation.executor;
 
-import com.vr.actions.page.Page;
+import com.vr.actions.v1.page.Page;
 import com.vr.ai.automation.entity.Step;
 import com.vr.ai.automation.entity.TestPlan;
 

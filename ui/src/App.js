@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-function LiveCanvas({ wsUrl, format = "jpeg", start }) {
+export default function App() {
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
+  const [running, setRunning] = useState(false);
 
+  // Connect to WebSocket immediately
   useEffect(() => {
-    if (!start || wsRef.current) return;
+    const ws = new WebSocket(
+      "wss://test-runner-slave-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/ws/screencast"
+    );
 
-    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => console.log("WebSocket connected");
@@ -16,7 +19,7 @@ function LiveCanvas({ wsUrl, format = "jpeg", start }) {
 
     ws.onmessage = (event) => {
       const img = new Image();
-      img.src = `data:image/${format};base64,${event.data}`;
+      img.src = `data:image/jpeg;base64,${event.data}`;
 
       img.onload = () => {
         const canvas = canvasRef.current;
@@ -35,34 +38,13 @@ function LiveCanvas({ wsUrl, format = "jpeg", start }) {
       ws.close();
       wsRef.current = null;
     };
-  }, [start, wsUrl, format]);
+  }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      width={1920}
-      height={1080}
-      style={{
-        width: "100%",
-        height: "auto",
-        border: "1px solid #ccc",
-        marginTop: 20,
-        backgroundColor: "#000",
-        display: "block",
-      }}
-    />
-  );
-}
-
-export default function App() {
-  const [startCasting, setStartCasting] = useState(false);
-  const [running, setRunning] = useState(false);
-
+  // Button → only GET call
   const runTest = async () => {
     if (running) return;
 
     setRunning(true);
-    setStartCasting(true); // ✅ Start screencast immediately
 
     try {
       await fetch(
@@ -71,6 +53,8 @@ export default function App() {
       );
     } catch (err) {
       console.error("Failed to run test", err);
+    } finally {
+      setRunning(false);
     }
   };
 
@@ -86,12 +70,19 @@ export default function App() {
         {running ? "Running..." : "Run Test"}
       </button>
 
-      <div style={{ marginTop: 40 }}>
+      <div style={{ marginTop: 30 }}>
         <h3>Live Screencast</h3>
-        <LiveCanvas
-          wsUrl="wss://test-runner-slave-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/ws/screencast"
-          format="jpeg"
-          start={startCasting}
+        <canvas
+          ref={canvasRef}
+          width={1920}
+          height={1080}
+          style={{
+            width: "100%",
+            height: "auto",
+            border: "1px solid #ccc",
+            backgroundColor: "#000",
+            display: "block",
+          }}
         />
       </div>
     </div>

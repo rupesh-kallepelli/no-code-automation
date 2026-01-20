@@ -1,7 +1,7 @@
 package com.vr.test.runner.slave.service.test.impl;
 
-import com.vr.actions.page.v1.Page;
-import com.vr.actions.page.v1.chromium.ChromiumPage;
+import com.vr.actions.v1.page.Page;
+import com.vr.actions.v1.page.chromium.ChromePage;
 import com.vr.test.runner.slave.browser.request.BrowserRequest;
 import com.vr.test.runner.slave.browser.request.BrowserType;
 import com.vr.test.runner.slave.browser.response.BrowserSessionResponse;
@@ -41,7 +41,7 @@ public class ChromeTestService extends ChromiumTestService {
                     .getBody();
             assert browserSessionResponse != null;
             String websocketUrl = browserSessionResponse.wsUrl().replace("ws://", "wss://");
-            return new ChromiumPage(
+            return new ChromePage(
                     browserSessionResponse.sessionId(),
                     websocketUrl,
                     true,

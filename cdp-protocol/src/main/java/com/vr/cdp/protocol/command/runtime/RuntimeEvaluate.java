@@ -12,6 +12,11 @@ public class RuntimeEvaluate
         this.params = new Params(expression, true);
     }
 
+    public RuntimeEvaluate(String expression, boolean returnByValue) {
+        super("Runtime.evaluate");
+        this.params = new Params(expression, returnByValue);
+    }
+
     @Override
     public Object getParams() {
         return params;

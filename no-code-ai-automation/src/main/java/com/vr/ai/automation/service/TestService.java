@@ -1,7 +1,7 @@
 package com.vr.ai.automation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.actions.page.Page;
+import com.vr.actions.v1.page.Page;
 import com.vr.ai.automation.entity.ActionType;
 import com.vr.ai.automation.entity.Step;
 import com.vr.ai.automation.entity.TestPlan;

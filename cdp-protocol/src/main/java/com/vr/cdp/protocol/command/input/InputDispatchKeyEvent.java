@@ -1,6 +1,7 @@
 package com.vr.cdp.protocol.command.input;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.vr.cdp.protocol.command.response.EmptyResult;
 
 public class InputDispatchKeyEvent extends InputCommand<EmptyResult> {
@@ -9,18 +10,19 @@ public class InputDispatchKeyEvent extends InputCommand<EmptyResult> {
 
     public InputDispatchKeyEvent(
             String type,
-            String key,
-            String code,
-            int keyCode,
-            boolean ctrl,
-            boolean alt,
-            boolean shift,
-            boolean meta
+            String text
+//            String code,
+//            int keyCode,
+//            boolean ctrl,
+//            boolean alt,
+//            boolean shift,
+//            boolean meta
     ) {
         super("Input.dispatchKeyEvent");
         this.params = new Params(
-                type, key, code, keyCode,
-                ctrl, alt, shift, meta
+                type, text
+//                , code, keyCode,
+//                ctrl, alt, shift, meta
         );
     }
 
@@ -34,14 +36,15 @@ public class InputDispatchKeyEvent extends InputCommand<EmptyResult> {
         return EmptyResult.class;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Params(
             String type,      // keyDown, keyUp, char
-            String key,
-            String code,
-            int windowsVirtualKeyCode,
-            boolean ctrlKey,
-            boolean altKey,
-            boolean shiftKey,
-            boolean metaKey
+            String text
+//            String code,
+//            int windowsVirtualKeyCode,
+//            boolean ctrlKey,
+//            boolean altKey,
+//            boolean shiftKey,
+//            boolean metaKey
     ) {}
 }

@@ -9,7 +9,7 @@ public class DOMGetDocument
 
     public DOMGetDocument(int depth) {
         super("DOM.getDocument");
-        this.params = new Params(depth);
+        this.params = new Params(depth, true);
     }
 
     public DOMGetDocument() {
@@ -26,7 +26,8 @@ public class DOMGetDocument
         return Result.class;
     }
 
-    public record Params(int depth) {}
+    public record Params(int depth, boolean pierce) {
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Result(Node root) {}

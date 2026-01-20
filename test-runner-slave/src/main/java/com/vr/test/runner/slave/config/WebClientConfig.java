@@ -7,8 +7,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
-    @Value("${browser.service}")
-    private String browserService;
+
+    private final String browserService;
+
+    public WebClientConfig(@Value("${browser.service}") String browserService) {
+        this.browserService = browserService;
+    }
 
     @Bean
     public WebClient browserClient() {

@@ -7,7 +7,7 @@ public class InputInsertText extends InputCommand<EmptyResult> {
 
     private final Params params;
 
-    public InputInsertText(String text) {
+    public InputInsertText(CharSequence text) {
         super("Input.insertText");
         this.params = new Params(text);
     }
@@ -22,5 +22,6 @@ public class InputInsertText extends InputCommand<EmptyResult> {
         return EmptyResult.class;
     }
 
-    public record Params(String text) {}
+    public record Params(CharSequence text) {
+    }
 }

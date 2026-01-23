@@ -1,6 +1,5 @@
 package com.vr.cdp.protocol.command.page;
 
-import com.vr.cdp.protocol.command.CDPCommand;
 import com.vr.cdp.protocol.command.response.EmptyResult;
 
 public class PageSetLifecycleEventsEnabled

@@ -19,7 +19,7 @@ public class PageCDPClient extends RawCDPClient {
         try {
             JsonNode json = mapper.readTree(message);
             if (json.has("method")) {
-                page.onEvent(json);
+                page.onEvent(message);
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

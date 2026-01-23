@@ -9,11 +9,13 @@ import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.protocol.command.dom.DOMEnable;
 import com.vr.cdp.protocol.command.dom.DOMGetDocument;
 import com.vr.cdp.protocol.command.dom.DOMRequestNode;
+import com.vr.cdp.protocol.command.runtime.ExecutionContextCreatedEvent;
 import com.vr.cdp.protocol.command.runtime.RuntimeEnable;
 import com.vr.cdp.protocol.command.runtime.RuntimeEvaluate;
 
 import javax.lang.model.util.Elements;
 import java.util.List;
+import java.util.Objects;
 
 public class RuntimeElementFinder extends AbstractElementFiner {
     public RuntimeElementFinder(CDPClient client) {
@@ -29,12 +31,22 @@ public class RuntimeElementFinder extends AbstractElementFiner {
     }
 
     @Override
-    public Element findElement(Selector selector) {
+    public Element findElement(Selector selector, List<ExecutionContextCreatedEvent> executionContextCreatedEventList) {
         try {
             String jsonQuery = getXpathJsExpression(selector.getSelectorValue());
             RuntimeEvaluate.Result runtimeResult = this.client.sendAndWait(new RuntimeEvaluate(jsonQuery, false));
 
-            DOMRequestNode.Result nodeId = client.sendAndWait(new DOMRequestNode(runtimeResult.result().objectId()));
+            String objectId = runtimeResult.result().objectId();
+
+            if (Objects.isNull(objectId)) {
+                for (ExecutionContextCreatedEvent executionContextCreatedEvent : executionContextCreatedEventList) {
+                    runtimeResult = this.client.sendAndWait(new RuntimeEvaluate(executionContextCreatedEvent.params().context().id(), jsonQuery, false));
+                    if (Objects.nonNull(runtimeResult)) break;
+                }
+            }
+            if (Objects.isNull(objectId))
+                throw new ElementNotFound("Could not find the element : " + selector.getSelectorValue());
+            DOMRequestNode.Result nodeId = client.sendAndWait(new DOMRequestNode(objectId));
 
             return new Element.ElementImpl(
                     new Element.Node(

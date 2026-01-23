@@ -28,27 +28,44 @@ public class SmokeTest {
 //                1920,
 //                1080
 //        );
+
+        page.navigate("https://demoqa.com/frames");
+        Element about = page.findElement(Selector.selectByXPath("//*[@id='sampleHeading']"));
+        about.rightClick();
+//        Element imageToDrag = page.findElement(Selector.selectByCssSelector(".ui-draggable-handle"));
+//        imageToDrag.rightClick();
+//        Thread.sleep(5000);
+//        Element trashDestination = page.findElement(Selector.selectByXPath("//div[@class='ui-widget-content ui-state-default ui-droppable']"));
+//        imageToDrag.dragToElement(trashDestination);
         page.navigate("https://opensource-demo.orangehrmlive.com/");
 //        Thread.sleep(3000);
         Element username = page.findElement(Selector.selectByXPath("//input[@name='username']"));
+        screenshot(username);
         username.typeIndividualCharacter("Admin");
+        screenshot(username);
         System.out.println(username.getAttributes());
         System.out.println(username.getProperties());
 //        Thread.sleep(300);
         screenshot(page);
         Element password = page.findElement(Selector.selectByXPath("//input[@name='password']"));
+        screenshot(password);
         password.type("admin123");
+        screenshot(password);
 //        Thread.sleep(300);
         screenshot(page);
 //        page.findElement(Selector.selectByClass("orangehrm-login-forgot-header"))
 //                .rightClick();
 //        page.findElement(Selector.selectByTag("button")).rightClick();
-        page.findElement(Selector.selectByXPath("//button[@type='submit']")).click();
+        Element button = page.findElement(Selector.selectByXPath("//button[@type='submit']"));
+        screenshot(button);
+        button.click();
         screenshot(page);
 //        Thread.sleep(5000);
 
         Element element = page.findElement(Selector.selectByXPath("//span[text()='Admin']"));
+        screenshot(element);
         element.click();
+        screenshot(element);
 //        Thread.sleep(3000);
         username.highlight();
         page.close();
@@ -56,9 +73,17 @@ public class SmokeTest {
     }
 
     private static void screenshot(Page page) throws Exception {
-        byte[] bytes = page.screenshotPng();
+        byte[] bytes = page.screenshot();
         try (FileOutputStream fos = new FileOutputStream("screenshots/" + System.currentTimeMillis() + ".png")) {
             fos.write(bytes);
         }
     }
+
+    private static void screenshot(Element element) throws Exception {
+        byte[] bytes = element.screenshot();
+        try (FileOutputStream fos = new FileOutputStream("screenshots/" + System.currentTimeMillis() + ".png")) {
+            fos.write(bytes);
+        }
+    }
+
 }

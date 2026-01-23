@@ -37,12 +37,12 @@ public class TestController {
         UUID uuid = UUID.randomUUID();
         page.navigate("https://opensource-demo.orangehrmlive.com/");
         page.type("input[name='username']", "Admin");
-        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
+//        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
         page.type("input[name='password']", "admin123");
-        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
+//        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
         page.click("button[type='submit']");
         Thread.sleep(5000);
-        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
+//        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
         testService.close(page.getId());
         return Mono.just("Test Completed");
     }

@@ -1,6 +1,5 @@
 package com.vr.cdp.protocol.command.debug;
 
-import com.vr.cdp.protocol.command.CDPCommand;
 import com.vr.cdp.protocol.command.response.EmptyResult;
 
 public class DebuggerSetPauseOnExceptions

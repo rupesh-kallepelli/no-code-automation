@@ -1,6 +1,7 @@
 package com.vr.cdp.protocol.command.input;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.vr.cdp.protocol.command.response.EmptyResult;
 
 public class InputDispatchMouseEvent extends InputCommand<EmptyResult> {
@@ -28,6 +29,7 @@ public class InputDispatchMouseEvent extends InputCommand<EmptyResult> {
         return EmptyResult.class;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Params(
             String type,     // mousePressed, mouseReleased, mouseMoved, mouseWheel
             Number x,

@@ -1,9 +1,10 @@
 package com.vr.actions.v1.page.chromium;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.actions.dom.DOMActions;
 import com.vr.actions.input.InputActions;
-import com.vr.actions.uitl.ScreenshotUtil;
 import com.vr.actions.v1.client.PageCDPClient;
 import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.element.finder.ElementResolver;
@@ -13,11 +14,10 @@ import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.client.broadcast.BroadCaster;
 import com.vr.cdp.client.ws.ScreenCastClient;
 import com.vr.cdp.protocol.command.page.*;
+import com.vr.cdp.protocol.command.runtime.ExecutionContextCreatedEvent;
+import com.vr.cdp.protocol.command.runtime.RuntimeEnable;
 
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ChromePage implements Page {
     private final String id;
@@ -48,6 +48,7 @@ public class ChromePage implements Page {
         this.input = new InputActions(client);
         this.elementResolver = new ElementResolver(client);
         client.send(new PageEnable());
+        client.send(new RuntimeEnable());
         client.send(new PageSetLifecycleEventsEnabled(true));
     }
 
@@ -70,38 +71,64 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public void onEvent(JsonNode json) {
+    public void onEvent(String message) {
+        JsonNode json;
+        try {
+            json = objectMapper.readTree(message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         String method = json.get("method").asText();
 
         switch (method) {
+
             /* -------------------------
-               Navigation starts
+               Navigation starts (MAIN FRAME ONLY)
             -------------------------- */
-            case "Page.frameStartedNavigating",
-                 "Page.frameStartedLoading" -> {
+            case "Page.frameStartedNavigating" -> {
+                String frameId = json.get("params").get("frameId").asText();
+
+                if (!frameId.equals(mainFrameId)) return;
+
                 resetReadiness();
                 transitionTo(PageState.BLOCKED);
             }
+
+            case "Page.frameStartedLoading" -> {
+                String frameId = json.get("params").get("frameId").asText();
+
+                if (!frameId.equals(mainFrameId)) return;
+
+                resetReadiness();
+                transitionTo(PageState.BLOCKED);
+            }
+
             /* -------------------------
                New main document
             -------------------------- */
             case "Page.frameNavigated" -> {
                 JsonNode frame = json.get("params").get("frame");
+
                 mainFrameId = frame.get("id").asText();
+
                 invalidateElements();
                 resetReadiness();
                 transitionTo(PageState.BLOCKED);
             }
+
             /* -------------------------
-               Browser finished loading
+               Browser finished loading (OPTIONAL)
             -------------------------- */
             case "Page.frameStoppedLoading" -> {
                 String frameId = json.get("params").get("frameId").asText();
+
                 if (!frameId.equals(mainFrameId)) return;
+
                 frameStopped = true;
                 transitionTo(PageState.BROWSER_LOADED);
                 maybeMarkReady();
             }
+
             /* -------------------------
                Lifecycle events (SPA)
             -------------------------- */
@@ -135,22 +162,52 @@ public class ChromePage implements Page {
                 }
             }
             /* -------------------------
-               Frame destroyed
+               Frame subtree detach (IGNORE)
+            -------------------------- */
+            case "Page.frameSubtreeWillBeDetached" -> {
+                // Ignore — iframe noise
+            }
+
+            /* -------------------------
+               Frame detached
             -------------------------- */
             case "Page.frameDetached" -> {
                 String frameId = json.get("params").get("frameId").asText();
                 String reason = json.get("params").get("reason").asText();
+
+                // ✅ ONLY reset on MAIN FRAME swap
                 if ("swap".equals(reason) && frameId.equals(mainFrameId)) {
                     resetReadiness();
                     transitionTo(PageState.BLOCKED);
                 }
-                if ("remove".equals(reason)) {
+
+                // ✅ ONLY detach if MAIN FRAME is removed
+                if ("remove".equals(reason) && frameId.equals(mainFrameId)) {
                     transitionTo(PageState.DETACHED);
+                }
+
+                executionContextCreatedEvents.stream().filter(
+                        executionContextCreatedEvent -> frameId.equals(executionContextCreatedEvent
+                                .params().context()
+                                .auxData().frameId()
+                        )
+                ).findFirst().ifPresent(executionContextCreatedEvents::remove);
+
+            }
+            case "Runtime.executionContextCreated" -> {
+                try {
+                    ExecutionContextCreatedEvent executionContextCreatedEvent = objectMapper.readValue(message, ExecutionContextCreatedEvent.class);
+                    executionContextCreatedEvents.add(executionContextCreatedEvent);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
+
     }
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final List<ExecutionContextCreatedEvent> executionContextCreatedEvents = new ArrayList<>();
 
     private void maybeMarkReady() {
         boolean browserReady = frameStopped || interactive;
@@ -225,15 +282,15 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public byte[] screenshotPng() throws Exception {
-        PageCaptureScreenshot.Result r = client.sendAndWait(new PageCaptureScreenshot("png"));
-        return Base64.getDecoder().decode(r.data());
+    public byte[] screenshot() throws Exception {
+        PageCaptureScreenshot.Result result = client.sendAndWait(new PageCaptureScreenshot("png"));
+        return Base64.getDecoder().decode(result.data());
     }
 
     @Override
-    public void screenshot(String file) throws Exception {
+    public byte[] screenshotFullPage() throws Exception {
         var result = client.sendAndWait(new PageCaptureScreenshot("png"));
-        ScreenshotUtil.saveBase64Image(result.data(), file);
+        return Base64.getDecoder().decode(result.data());
     }
 
     @Override
@@ -264,7 +321,9 @@ public class ChromePage implements Page {
         if (ELEMENT_REGISTRY.containsKey(selector)) {
             return ELEMENT_REGISTRY.get(selector);
         }
-        Element element = waiter.waitUntilReadyAndThenExecute(this, () -> elementResolver.resolveElement(selector));
+        Element element = waiter.waitUntilReadyAndThenExecute(this,
+                () -> elementResolver.resolveElement(selector, executionContextCreatedEvents.stream().toList())
+        );
         ELEMENT_REGISTRY.put(selector, element);
         return element;
     }

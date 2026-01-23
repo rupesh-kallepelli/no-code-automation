@@ -1,6 +1,7 @@
 package com.vr.cdp.protocol.command.dom;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
 public class DOMGetBoxModel
@@ -30,6 +31,11 @@ public class DOMGetBoxModel
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record BoxModel(
-            List<Double> content
+            List<Double> content,
+            List<Double> padding,
+            List<Double> border,
+            List<Double> margin,
+            Number width,
+            Number height
     ) {}
 }

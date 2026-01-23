@@ -1,6 +1,5 @@
 package com.vr.actions.v1.page;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.element.selector.Selector;
 
@@ -8,7 +7,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public interface Page extends AutoCloseable {
-    void onEvent(JsonNode json);
+    void onEvent(String message);
 
     enum PageState {
         BLOCKED,          // navigating / loading
@@ -61,9 +60,10 @@ public interface Page extends AutoCloseable {
 
     void reload() throws Exception;
 
-    byte[] screenshotPng() throws Exception;
+    byte[] screenshot() throws Exception;
 
-    void screenshot(String file) throws Exception;
+
+    byte[] screenshotFullPage() throws Exception;
 
     void click(String selector) throws Exception;
 

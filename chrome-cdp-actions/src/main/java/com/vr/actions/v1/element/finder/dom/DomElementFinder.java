@@ -7,10 +7,14 @@ import com.vr.actions.v1.element.finder.dom.exception.ElementNotFound;
 import com.vr.actions.v1.element.selector.Selector;
 import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.protocol.command.dom.DOMEnable;
+import com.vr.cdp.protocol.command.dom.DOMGetDocument;
 import com.vr.cdp.protocol.command.dom.DOMQuerySelector;
+import com.vr.cdp.protocol.command.page.PageGetFrameTree;
+import com.vr.cdp.protocol.command.runtime.ExecutionContextCreatedEvent;
 
 import javax.lang.model.util.Elements;
 import java.util.List;
+import java.util.Objects;
 
 public class DomElementFinder extends AbstractElementFiner {
 
@@ -25,9 +29,36 @@ public class DomElementFinder extends AbstractElementFiner {
     }
 
     @Override
-    public Element findElement(Selector selector) {
+    public Element findElement(Selector selector, List<ExecutionContextCreatedEvent> executionContextCreatedEventList) {
         try {
             DOMQuerySelector.Result querySelectorResult = this.client.sendAndWait(new DOMQuerySelector(getRootNode(), selector.getSelectorValue()));
+
+            if (querySelectorResult.nodeId() == null || querySelectorResult.nodeId() == 0) {
+                List<PageGetFrameTree.Frame> frames = getFlattenedFrames();
+
+                for (PageGetFrameTree.Frame frame : frames) {
+
+                    Integer rootNodeId = getFrameDocumentNodeId(frame.id());
+
+                    if (rootNodeId == null) {
+                        continue;
+                    }
+
+                    querySelectorResult = this.client.sendAndWait(
+                            new DOMQuerySelector(rootNodeId, selector.getSelectorValue())
+                    );
+
+                    if (querySelectorResult.nodeId() != null &&
+                            querySelectorResult.nodeId() != 0) {
+                        break;
+                    }
+                }
+            }
+
+            if (Objects.isNull(querySelectorResult.nodeId()) || Objects.equals(querySelectorResult.nodeId(), 0)) {
+                throw new ElementNotFound("Element not found with selector : " + selector.getSelectorValue());
+            }
+
             return new Element.ElementImpl(
                     new Element.Node(
                             querySelectorResult.nodeId(),
@@ -41,54 +72,31 @@ public class DomElementFinder extends AbstractElementFiner {
         }
     }
 
-//    private Element findElementByCssSelector(Selector selector) {
-//        try {
-//            DOMQuerySelector.Result querySelectorResult = this.client.sendAndWait(new DOMQuerySelector(getRootNode(), selector.getSelectorValue()));
-//            return new Element.ElementImpl(
-//                    new Element.Node(
-//                            querySelectorResult.nodeId(),
-//                            selector,
-//                            Element.IdentifiedBy.DOM
-//                    ),
-//                    client
-//            );
-//        } catch (Exception e) {
-//            throw new ElementNotFound("Couldn't find the element with css selector : " + selector.getSelectorValue(), e);
-//        }
-//    }
+    private Integer getFrameDocumentNodeId(String frameId) throws Exception {
+        DOMGetDocument.Result doc = this.client.sendAndWait(new DOMGetDocument());
+        return findFrameDocumentNodeId(doc.root(), frameId);
+    }
 
-//    private Element findElementByXpathSelector(Selector selector) {
-//        try {
-//            String jsonQuery = getXpathJsExpression(selector.getSelectorValue());
-//            RuntimeEvaluate.Result runtimeResult = this.client.sendAndWait(new RuntimeEvaluate(jsonQuery, false));
+    private Integer findFrameDocumentNodeId(DOMGetDocument.Node node, String frameId) {
 
-    /// /            DOMRequestNode.Result requestNodeResult = this.client.sendAndWait(new DOMRequestNode(runtimeResult.result().objectId()));
-    /// /            DOMPerformSearch.Result querySelectorResult = this.client.sendAndWait(new DOMPerformSearch(selector.getSelectorValue()));
-    /// /            DOMGetSearchResults.Result searchResult = this.client.sendAndWait(new DOMGetSearchResults(querySelectorResult.searchId(), querySelectorResult.resultCount()));
-//            return new Element.ElementImpl(
-//                    new Element.Node(
-//                            runtimeResult.result().objectId(),
-//                            selector,
-//                            Element.IdentifiedBy.RUNTIME
-//                    ),
-//                    client
-//            );
-//        } catch (Exception e) {
-//            throw new ElementNotFound("Couldn't find the element with xpath selector : " + selector.getSelectorValue(), e);
-//        }
-//    }
+        if ("IFRAME".equals(node.nodeName())
+                && frameId.equals(node.frameId())
+                && node.contentDocument() != null) {
 
-//    private String getXpathJsExpression(String selectorValue) {
-//        return """
-//                document.evaluate(
-//                        "<xpath>",
-//                        document,
-//                        null,
-//                        XPathResult.FIRST_ORDERED_NODE_TYPE,
-//                        null
-//                    )
-//                .singleNodeValue""".replace("<xpath>", selectorValue);
-//    }
+            return node.contentDocument().nodeId();
+        }
+
+        if (node.children() != null) {
+            for (DOMGetDocument.Node child : node.children()) {
+                Integer result = findFrameDocumentNodeId(child, frameId);
+                if (result != null) return result;
+            }
+        }
+
+        return null;
+    }
+
+
     @Override
     public List<Elements> findElements(Selector selector) {
         throw new RuntimeException("No implementation yet");

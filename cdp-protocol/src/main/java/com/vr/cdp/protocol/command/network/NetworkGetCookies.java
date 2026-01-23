@@ -1,6 +1,7 @@
 package com.vr.cdp.protocol.command.network;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
 public class NetworkGetCookies

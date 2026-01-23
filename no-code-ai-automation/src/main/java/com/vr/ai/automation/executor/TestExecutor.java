@@ -41,7 +41,7 @@ public class TestExecutor {
     }
 
     private static void screenshot(Page page) throws Exception {
-        byte[] bytes = page.screenshotPng();
+        byte[] bytes = page.screenshot();
         try (FileOutputStream fos = new FileOutputStream("screenshot" + System.currentTimeMillis() + ".png")) {
             fos.write(bytes);
         }

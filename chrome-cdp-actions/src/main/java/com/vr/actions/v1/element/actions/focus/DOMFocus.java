@@ -13,9 +13,14 @@ public interface DOMFocus extends ScrollIntoView {
         client.send(new com.vr.cdp.protocol.command.dom.DOMFocus(node.getNodeId()));
         DOMGetBoxModel.Result box = client.sendAndWait(new DOMGetBoxModel(node.getNodeId()));
         List<Double> c = box.model().content();
-        double x = (c.get(0) + c.get(4)) / 2;
-        double y = (c.get(1) + c.get(5)) / 2;
-        return new Focus(x, y);
+        //center
+        double centerX = (c.get(0) + c.get(4)) / 2;
+        double centerY = (c.get(1) + c.get(5)) / 2;
+        //height and width
+        double x = c.get(0);
+        double y = c.get(1);
+
+        return new Focus(centerX, centerY, x, y, box.model().height(), box.model().width());
     }
 
 }

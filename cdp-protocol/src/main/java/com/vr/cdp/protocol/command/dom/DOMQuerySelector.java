@@ -22,5 +22,5 @@ public class DOMQuerySelector
 
     public record Params(int nodeId, String selector) {}
 
-    public record Result(int nodeId) {}
+    public record Result(Integer nodeId) {}
 }

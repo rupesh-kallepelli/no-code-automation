@@ -12,10 +12,10 @@ public interface Clickable extends Focusable {
         try {
             Focus focus = focus(node, client);
             client.send(new InputDispatchMouseEvent(
-                    "mousePressed", focus.x(), focus.y(), mouseButton, 1
+                    "mousePressed", focus.centerX(), focus.centerY(), mouseButton, 1
             ));
             client.send(new InputDispatchMouseEvent(
-                    "mouseReleased", focus.x(), focus.y(), mouseButton, 1
+                    "mouseReleased", focus.centerX(), focus.centerY(), mouseButton, 1
             ));
         } catch (Exception e) {
             throw new ClickInterInterceptedExceptionException(e.getMessage());

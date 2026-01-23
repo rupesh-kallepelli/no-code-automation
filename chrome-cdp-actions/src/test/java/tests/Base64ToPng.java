@@ -1,8 +1,8 @@
 package tests;
 
-import java.util.Base64;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 
 public class Base64ToPng {
     public static void main(String[] args) {

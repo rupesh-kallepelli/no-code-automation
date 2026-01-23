@@ -16,16 +16,24 @@ public interface RuntimeFocus {
                             this.scrollIntoView({ block: 'center', inline: 'center' });
                             this.focus(); const r = this.getBoundingClientRect();
                             return {
-                                x: r.left + r.width / 2,
-                                y: r.top + r.height / 2
+                                centerX: r.left + r.width / 2,
+                                centerY: r.top + r.height / 2,
+                                width: r.width,
+                                height: r.height,
+                                left: r.left,
+                                top: r.top,
                             };
                         }"""
                 , node.getObjectId(),
                 List.of()
         ));
 
-        return new Focus((Number) result.result().value().get("x"),
-                (Number) result.result().value().get("y")
+        return new Focus((Number) result.result().value().get("centerX"),
+                (Number) result.result().value().get("centerY"),
+                (Number) result.result().value().get("left"),
+                (Number) result.result().value().get("centerX"),
+                (Number) result.result().value().get("top"),
+                (Number) result.result().value().get("width")
         );
     }
 }

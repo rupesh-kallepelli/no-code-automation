@@ -13,5 +13,5 @@ public interface BrowserDetails {
 
     String getAddress();
 
-    int getPort();
+    String getPort();
 }

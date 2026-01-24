@@ -157,6 +157,11 @@ spec:
       containers:
         - name: browser-service
           image: 'image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/browser-service:latest'
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           ports:
             - containerPort: 9999
             - containerPort: 9222

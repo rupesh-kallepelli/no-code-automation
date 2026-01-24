@@ -1,3 +1,5 @@
+server:
+  port: 8080
 spring:
   application:
     name: browser-service
@@ -6,13 +8,30 @@ spring:
   websocket:
     compression:
       enabled: false
-server:
-  port: 8080
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics   # expose actuator endpoints
+  metrics:
+    export:
+      prometheus:
+        enabled: true                     # enable Prometheus registry
+  endpoint:
+    health:
+      show-details: always
 browser:
-  mode: true
-cdp:
-  ws:
-    host: browser-service-cdp-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
+  mode: false
+registry:
+  host: http://browser-registry/api/v1
+ip:
+  address: ${POD_IP:127.0.0.1}
 
 #logging:
 #  level:

@@ -7,6 +7,6 @@ public record BrowserSessionResponse(
         BrowserType browserType,
         String wsUrl,
         String address,
-        int port
+        String port
 ) {
 }

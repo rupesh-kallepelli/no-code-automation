@@ -1,6 +1,6 @@
 package com.vr.browser.service.response;
 
 public record SessionDeleteResponse(
-        Long sessionId,
+        String sessionId,
         String status) {
 }

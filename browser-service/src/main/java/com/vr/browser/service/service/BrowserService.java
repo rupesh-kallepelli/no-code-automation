@@ -2,43 +2,19 @@ package com.vr.browser.service.service;
 
 import com.vr.browser.service.request.BrowserRequest;
 import com.vr.browser.service.response.BrowserSessionResponse;
-import com.vr.launcher.v1.BrowserDetails;
-import com.vr.launcher.v1.BrowserLauncher;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
-public interface BrowserService {
-    Map<String, BrowserDetails> PROCESS_CACHE = new HashMap<>();
+public abstract class BrowserService {
 
-    static void killBrowserProcess(String id) {
-        BrowserDetails details = PROCESS_CACHE.get(id);
-        if (Objects.nonNull(details)) {
-            details.getProcess().destroyForcibly();
-            details.getUsrDir().delete();
-            BrowserLauncher.cleanWSUrl(details.getWsUrl());
-        }
-    }
 
-    static void killAll() {
-        PROCESS_CACHE.forEach((id, details) -> {
-            if (Objects.nonNull(details)) {
-                details.getProcess().destroyForcibly();
-                details.getUsrDir().delete();
-                BrowserLauncher.cleanWSUrl(details.getWsUrl());
-            }
-        });
-        PROCESS_CACHE.clear();
-    }
-
-    static void addNewBrowserProcess(String id, BrowserDetails browserDetails) {
-        PROCESS_CACHE.put(id, browserDetails);
-    }
-
-    default String replaceHostAndPort(String originalUrl, String newHost, int newPort)
+    protected String replaceHostAndPort(
+            String originalUrl,
+            String newHost,
+            String port,
+            String sessionId
+    )
             throws URISyntaxException {
 
         if (originalUrl == null || originalUrl.isEmpty()) {
@@ -61,14 +37,15 @@ public interface BrowserService {
                 scheme,      // ws / wss / http / https
                 originalUri.getUserInfo(),
                 newHost,
-                -1, //change to newPort in local
-                "/proxy/" + newPort + originalUri.getPath(),
-                originalUri.getQuery(),
+                Integer.parseInt(port), //change to newPort in local
+                "/ws",
+                "session=" + sessionId,
                 originalUri.getFragment()
         );
 
         return updatedUri.toString();
     }
-    BrowserSessionResponse launchBrowser(BrowserRequest browserRequest) throws Exception;
+
+    public abstract BrowserSessionResponse launchBrowser(BrowserRequest browserRequest) throws Exception;
 
 }

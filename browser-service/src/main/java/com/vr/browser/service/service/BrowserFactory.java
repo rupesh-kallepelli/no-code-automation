@@ -13,7 +13,7 @@ public class BrowserFactory {
         this.chromeLauncherService = chromeLauncherService;
     }
 
-    public BrowserService getBrowser(BrowserType browserType) {
+    public BrowserService getBrowserService(BrowserType browserType) {
         return switch (browserType) {
             case CHROME -> chromeLauncherService;
             case EDGE -> throw new NoBrowserSupportYetException("Edge browser is not supported yet");

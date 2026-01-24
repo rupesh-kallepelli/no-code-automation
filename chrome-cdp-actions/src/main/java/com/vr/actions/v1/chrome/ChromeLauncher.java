@@ -13,16 +13,17 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 public class ChromeLauncher implements BrowserLauncher {
 
+    public static final String LOCAL_HOST = "127.0.0.1";
     private final String chromeBinary;
     private final boolean headless;
-    private final int remoteDebuggingPort;
+    private final String remoteDebuggingPort;
     private final File userDataDir;
     private final List<String> extraArgs;
     private final String remoteDebuggingAddress;
@@ -97,7 +98,7 @@ public class ChromeLauncher implements BrowserLauncher {
 
         return new ChromeDetails(
                 waitForFirstPageWs(),
-                Instant.now().toEpochMilli(),
+                UUID.randomUUID().toString(),
                 process,
                 userDataDir,
                 remoteDebuggingAddress,
@@ -114,7 +115,7 @@ public class ChromeLauncher implements BrowserLauncher {
         for (int i = 0; i < 50; i++) {
             try {
                 HttpRequest req = HttpRequest.newBuilder(
-                        URI.create("http://localhost:" + remoteDebuggingPort + "/json/version")
+                        URI.create("http://" + LOCAL_HOST + ":" + remoteDebuggingPort + "/json/version")
                 ).GET().build();
 
                 HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
@@ -134,7 +135,7 @@ public class ChromeLauncher implements BrowserLauncher {
 
         for (int i = 0; i < 50; i++) {
             HttpRequest req = HttpRequest.newBuilder(
-                    URI.create("http://localhost:" + remoteDebuggingPort + "/json")
+                    URI.create("http://" + LOCAL_HOST + ":" + remoteDebuggingPort + "/json")
             ).GET().build();
             try {
                 HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
@@ -203,9 +204,9 @@ public class ChromeLauncher implements BrowserLauncher {
     public static class Builder {
         private String binaryPath;
         private boolean headless = false;
-        private int remoteDebuggingPort = 9222;
+        private String remoteDebuggingPort = "9222";
         private File userDataDir;
-        private String remoteDebuggingAddress = "127.0.0.1";
+        private String remoteDebuggingAddress = LOCAL_HOST;
         private final List<String> extraArgs = new ArrayList<>();
 
 
@@ -223,7 +224,8 @@ public class ChromeLauncher implements BrowserLauncher {
             this.remoteDebuggingAddress = address;
             return this;
         }
-        public Builder remoteDebuggingPort(int port) {
+
+        public Builder remoteDebuggingPort(String port) {
             this.remoteDebuggingPort = port;
             return this;
         }
@@ -250,18 +252,18 @@ public class ChromeLauncher implements BrowserLauncher {
         private final Process process;
         private final File usrDir;
         private final String address;
-        private final int port;
+        private final String port;
 
         public ChromeDetails(
                 String wsUrl,
-                long epochMilli,
+                String id,
                 Process process,
                 File usrDir,
                 String address,
-                int port
+                String port
         ) {
             this.wsUrl = wsUrl;
-            this.id = String.valueOf(epochMilli);
+            this.id = id;
             this.process = process;
             this.usrDir = usrDir;
             this.address = address;
@@ -274,7 +276,7 @@ public class ChromeLauncher implements BrowserLauncher {
         }
 
         @Override
-        public int getPort() {
+        public String getPort() {
             return port;
         }
 

@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: browser-service-registry
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: StrongPassword123!
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics   # expose actuator endpoints
+  metrics:
+    export:
+      prometheus:
+        enabled: true                     # enable Prometheus registry
+  endpoint:
+    health:
+      show-details: always
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha

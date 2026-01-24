@@ -11,16 +11,16 @@ import java.util.UUID;
 
 public class SmokeTest {
     public static void main(String[] args) throws Exception {
-        ChromeLauncher chromeLauncher = ChromeLauncher.builder()
-                .headless(false)
-                .userDataDir("tmp/profile/"+ UUID.randomUUID())
-                .binaryPath("C:\\Users\\kalle\\Softwares\\chrome-v143.0.7499.192\\chrome-win64\\chrome.exe")
-                .remoteDebuggingPort(1000)
-                .build();
-
-        ChromeLauncher.ChromeDetails chromeDetails = chromeLauncher.launch();
-        System.out.println(chromeDetails.getWsUrl());
-        Page page = new ChromePage("12345", chromeDetails.getWsUrl());
+//        ChromeLauncher chromeLauncher = ChromeLauncher.builder()
+//                .headless(false)
+//                .userDataDir("tmp/profile/"+ UUID.randomUUID())
+//                .binaryPath("C:\\Users\\kalle\\Softwares\\chrome-v143.0.7499.192\\chrome-win64\\chrome.exe")
+//                .remoteDebuggingPort("1000")
+//                .build();
+//
+//        ChromeLauncher.ChromeDetails chromeDetails = chromeLauncher.launch();
+//        System.out.println(chromeDetails.getWsUrl());
+        Page page = new ChromePage("12345", "ws://127.0.0.1:8080/ws?session=c4de4643-49c7-451c-8b4d-277d5bc7c754");
         page.enable();
 //        page.cast(
 //                "jpeg",
@@ -28,10 +28,10 @@ public class SmokeTest {
 //                1920,
 //                1080
 //        );
-
-        page.navigate("https://demoqa.com/frames");
-        Element about = page.findElement(Selector.selectByXPath("//*[@id='sampleHeading']"));
-        about.rightClick();
+//
+//        page.navigate("https://demoqa.com/frames");
+//        Element about = page.findElement(Selector.selectByXPath("//*[@id='sampleHeading']"));
+//        about.rightClick();
 //        Element imageToDrag = page.findElement(Selector.selectByCssSelector(".ui-draggable-handle"));
 //        imageToDrag.rightClick();
 //        Thread.sleep(5000);
@@ -69,7 +69,7 @@ public class SmokeTest {
 //        Thread.sleep(3000);
         username.highlight();
         page.close();
-        chromeDetails.getProcess().destroyForcibly();
+//        chromeDetails.getProcess().destroyForcibly();
     }
 
     private static void screenshot(Page page) throws Exception {

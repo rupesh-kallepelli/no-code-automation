@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: browser-service-registry
+  namespace: kallepallirupesh-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: browser-service-registry
+  template:
+    metadata:
+      labels:
+        app: browser-service-registry
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: browser-service-registry
+          image: 'image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/browser-service-registry:latest'
+          ports:
+            - containerPort: 8080
+          securityContext:
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+---
+# =========================================
+# 5) Service + Route to expose nginx externally on 9223
+# =========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: browser-service-registry
+spec:
+  selector:
+    app: browser-service-registry
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: browser-service-registry
+spec:
+  to:
+    kind: Service
+    name: browser-service-registry
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+---

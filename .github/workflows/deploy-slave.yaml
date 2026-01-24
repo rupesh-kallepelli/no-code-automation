@@ -10,6 +10,7 @@ on:
        options:
          - browser-service
          - test-runner-slave
+         - browser-service-registry
   push:
     branches: [ main ]
 

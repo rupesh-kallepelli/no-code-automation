@@ -27,7 +27,7 @@ management:
     health:
       show-details: always
 browser:
-  mode: false
+  mode: true
 registry:
   host: http://browser-service-registry/api/v1
 ip:

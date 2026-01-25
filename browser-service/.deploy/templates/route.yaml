@@ -1,0 +1,14 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "browser-service.fullname" . }}
+  labels:
+    {{- include "browser-service.labels" . | nindent 4 }}
+spec:
+  to:
+    kind: Service
+    name: {{ include "browser-service.fullname" . }}
+  port:
+    targetPort: http
+  tls:
+    termination: edge

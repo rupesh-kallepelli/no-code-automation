@@ -1,0 +1,14 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "test-runner-slave.fullname" . }}
+  labels:
+    {{- include "test-runner-slave.labels" . | nindent 4 }}
+spec:
+  to:
+    kind: Service
+    name: {{ include "test-runner-slave.fullname" . }}
+  port:
+    targetPort: http
+  tls:
+    termination: edge

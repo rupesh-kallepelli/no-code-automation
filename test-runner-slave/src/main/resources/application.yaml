@@ -1,5 +1,37 @@
+server:
+  port: 8080
 spring:
   application:
     name: test-runner-slave
+  main:
+    web-application-type: reactive
+  websocket:
+    compression:
+      enabled: false
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,liveness   # expose actuator endpoints
+  metrics:
+    export:
+      prometheus:
+        enabled: true                     # enable Prometheus registry
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessstate:
+      enabled: true
 browser:
-  service: https://browser-service-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
+  service: http://browser-registry-service

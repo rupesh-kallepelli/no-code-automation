@@ -1,4 +1,4 @@
-name: Building and Deploying slave
+name: Building and Deploying
 
 on:
   workflow_dispatch:
@@ -8,9 +8,9 @@ on:
         required: true
         type: choice
         options:
+          - browser-service-registry
           - browser-service
           - test-runner-slave
-          - browser-service-registry
   push:
     branches: [ main ]
 

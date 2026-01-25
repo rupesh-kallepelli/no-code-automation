@@ -6,7 +6,6 @@ import com.vr.actions.v1.page.Page;
 import com.vr.actions.v1.page.chromium.ChromePage;
 
 import java.io.FileOutputStream;
-import java.util.List;
 
 public class SmokeTest {
     public static void main(String[] args) throws Exception {
@@ -20,16 +19,9 @@ public class SmokeTest {
 //        ChromeLauncher.ChromeDetails chromeDetails = chromeLauncher.launch();
 //        System.out.println(chromeDetails.getWsUrl());
 
-        List.of("9b5fad70-185a-4dbf-ab2a-eb8bf27fa826",
-                        "f335ff22-6afa-46e3-9722-5410b4e4c1a6",
-                        "181f110d-1131-4238-b00d-0855323bf4a4",
-                        "c564fe06-338a-4b76-9cd1-bc5aa027b64a").parallelStream()
-                .forEach(session -> {
 
-                    Page page;
-                    try {
-                        page = new ChromePage("12345", "wss://browser-service-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/ws?" + session);
-                        page.enable();
+        Page page = new ChromePage("12345", "wss://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/ws?session=5c6800d2-4523-4a7d-8ee1-64b4c7df5508");
+        page.enable();
 
 //        page.cast(
 //                "jpeg",
@@ -46,42 +38,38 @@ public class SmokeTest {
 //        Thread.sleep(5000);
 //        Element trashDestination = page.findElement(Selector.selectByXPath("//div[@class='ui-widget-content ui-state-default ui-droppable']"));
 //        imageToDrag.dragToElement(trashDestination);
-                        page.navigate("https://opensource-demo.orangehrmlive.com/");
+        page.navigate("https://opensource-demo.orangehrmlive.com/");
 //        Thread.sleep(3000);
-                        Element username = page.findElement(Selector.selectByXPath("//input[@name='username']"));
-                        screenshot(username);
-                        username.typeIndividualCharacter("Admin");
-                        screenshot(username);
-                        System.out.println(username.getAttributes());
-                        System.out.println(username.getProperties());
+        Element username = page.findElement(Selector.selectByXPath("//input[@name='username']"));
+        screenshot(username);
+        username.typeIndividualCharacter("Admin");
+        screenshot(username);
+        System.out.println(username.getAttributes());
+        System.out.println(username.getProperties());
 //        Thread.sleep(300);
-                        screenshot(page);
-                        Element password = page.findElement(Selector.selectByXPath("//input[@name='password']"));
-                        screenshot(password);
-                        password.type("admin123");
-                        screenshot(password);
+        screenshot(page);
+        Element password = page.findElement(Selector.selectByXPath("//input[@name='password']"));
+        screenshot(password);
+        password.type("admin123");
+        screenshot(password);
 //        Thread.sleep(300);
-                        screenshot(page);
+        screenshot(page);
 //        page.findElement(Selector.selectByClass("orangehrm-login-forgot-header"))
 //                .rightClick();
 //        page.findElement(Selector.selectByTag("button")).rightClick();
-                        Element button = page.findElement(Selector.selectByXPath("//button[@type='submit']"));
-                        screenshot(button);
-                        button.click();
-                        screenshot(page);
+        Element button = page.findElement(Selector.selectByXPath("//button[@type='submit']"));
+        screenshot(button);
+        button.click();
+        screenshot(page);
 //        Thread.sleep(5000);
 
-                        Element element = page.findElement(Selector.selectByXPath("//span[text()='Admin']"));
-                        screenshot(element);
-                        element.click();
-                        screenshot(element);
+        Element element = page.findElement(Selector.selectByXPath("//span[text()='Admin']"));
+        screenshot(element);
+        element.click();
+        screenshot(element);
 //        Thread.sleep(3000);
-                        username.highlight();
-                        page.close();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        username.highlight();
+        page.close();
 //        chromeDetails.getProcess().destroyForcibly();
     }
 

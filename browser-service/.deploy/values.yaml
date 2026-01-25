@@ -1,0 +1,109 @@
+namespace: kallepallirupesh-dev
+ocProject: rm2.thpm.p1
+
+replicaCount: 1
+
+image:
+  repository: image-registry.openshift-image-registry.svc:5000
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  automount: false
+  annotations: { }
+  name: ""
+
+podAnnotations:
+  prometheus.io/path: /actuator/prometheus
+  prometheus.io/port: "8080"
+  prometheus.io/scrape: "true"
+podLabels: { }
+
+podSecurityContext: { }
+# fsGroup: 2000
+
+securityContext: { }
+  # capabilities:
+  #   drop:
+  #   - ALL
+# readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: browser-service
+                port:
+                  number: 8080
+  tls: [ ]
+  # - secretName: chart-example-tls
+  #   hosts:
+  #     - chart-example.local
+
+resources: { }
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 3
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 3
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+  targetMemoryUtilizationPercentage: 70
+
+volumes:
+  - name: dshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: 1Gi
+  - name: chrome-data
+    emptyDir: { }
+
+volumeMounts:
+  - name: dshm
+    mountPath: /dev/shm
+  - name: chrome-data
+    mountPath: /tmp/chrome
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }

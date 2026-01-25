@@ -20,3 +20,4 @@ spec:
     to:
       kind: ImageStreamTag
       name: browser-service-registry:latest
+---

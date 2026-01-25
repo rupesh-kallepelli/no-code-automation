@@ -38,7 +38,7 @@ public class BrowserServiceRegisterScheduler {
         this.browserRegistry = browserRegistry;
     }
 
-    @Scheduled(fixedRate = 3000)
+//    @Scheduled(fixedRate = 3000)
     public void register() {
         registryClient.
                 post()
@@ -55,7 +55,7 @@ public class BrowserServiceRegisterScheduler {
                 .block();
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void init() {
         RegistryResponse registryResponse = registryClient.
                 post()

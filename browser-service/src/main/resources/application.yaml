@@ -18,7 +18,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics   # expose actuator endpoints
+        include: health,info,prometheus,metrics,liveness   # expose actuator endpoints
   metrics:
     export:
       prometheus:
@@ -26,6 +26,13 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessstate:
+      enabled: true
 browser:
   mode: true
 registry:

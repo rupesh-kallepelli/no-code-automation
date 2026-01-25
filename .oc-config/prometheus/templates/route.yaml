@@ -1,0 +1,17 @@
+###########################################
+# Prometheus Route (OpenShift)
+###########################################
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespace }}
+spec:
+  to:
+    kind: Service
+    name: prometheus
+    weight: 100
+  port:
+    targetPort: 9090
+  tls:
+    termination: edge

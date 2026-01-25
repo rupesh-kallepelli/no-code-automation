@@ -1,0 +1,57 @@
+name: Setup OC
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  get-pods:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # Step 2: Install OpenShift CLI
+      - name: Install OpenShift CLI
+        uses: redhat-actions/oc-installer@v1
+
+      # Step 3: Install Helm
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.0   # choose desired Helm version
+
+      # Step 4: Login to OpenShift
+      - name: Login to OpenShift
+        run: |
+          oc login ${{ secrets.OPENSHIFT_SERVER }} \
+            --token=${{ secrets.OPENSHIFT_TOKEN }} \
+            --insecure-skip-tls-verify
+
+      # Step 5: Select project
+      - name: Select project
+        run: |
+          oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      # Step 6: Apply image stream manifest
+      - name: Create Image streams
+        run: |
+          oc apply -f ./.oc-config/image-streams.yaml
+
+      # Step 7: Apply build configs manifest
+      - name: Create Image streams
+        run: |
+          oc apply -f ./.oc-config/build-configs.yaml
+
+      #Step 8: Build jdk17+chrome image
+      - name: Build jdk+chrome image
+        run: |
+          oc start-build jdk17-chrome --follow
+
+      #Step 9: deployment or upgrade prometheus
+      - name: Deploy prometheus
+        run: |
+          helm upgrade prometheus -i ./.oc-config/prometheus/

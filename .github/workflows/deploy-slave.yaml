@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       service:
-       description: "Select service to deploy"
-       required: true
-       type: choice
-       options:
-         - browser-service
-         - test-runner-slave
-         - browser-service-registry
+        description: "Select service to deploy"
+        required: true
+        type: choice
+        options:
+          - browser-service
+          - test-runner-slave
+          - browser-service-registry
   push:
     branches: [ main ]
 
@@ -91,6 +91,11 @@ jobs:
       - name: Install OpenShift CLI
         uses: redhat-actions/oc-installer@v1
 
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.0
+
       - name: Login to OpenShift
         run: |
           oc login ${{ secrets.OPENSHIFT_SERVER }} \
@@ -100,3 +105,15 @@ jobs:
       - name: Build ${{ github.event.inputs.service }}
         run: |
           oc start-build ${{ github.event.inputs.service }} --from-file=./${{ github.event.inputs.service }}/app.jar --follow
+
+      - name: Helm Lint ${{ github.event.inputs.service }}
+        run: |
+          helm lint ./${{ github.event.inputs.service }}/.deploy/
+
+      - name: Helm Template ${{ github.event.inputs.service }}
+        run: |
+          helm template ${{ github.event.inputs.service }} ./${{ github.event.inputs.service }}/.deploy/  
+
+      - name: Upgrading ${{ github.event.inputs.service }}
+        run: |
+          helm upgrade -i ${{ github.event.inputs.service }} ./${{ github.event.inputs.service }}/.deploy/

@@ -18,107 +18,10 @@ kind: ImageStream
 metadata:
   name: jdk17-chrome
 ---
-apiVersion: build.openshift.io/v1
-kind: BuildConfig
-metadata:
-  name: jdk17-chrome
-spec:
-  source:
-    type: Dockerfile
-    dockerfile: |
-      FROM registry.access.redhat.com/ubi8/openjdk-17:1.17-1
-      
-      USER 0
-      
-      # Install dependencies
-      RUN microdnf install -y \
-            unzip curl atk gtk3 libX11 libXcomposite libXcursor libXdamage libXext libXfixes \
-            libXi libXrandr libXrender nss nspr alsa-lib cups-libs libdrm mesa-libgbm pango glib2 \
-            xorg-x11-fonts-Type1 xorg-x11-fonts-misc \
-            && microdnf clean all
-
-      # Download Chrome-for-Testing
-      RUN curl -L https://storage.googleapis.com/chrome-for-testing-public/143.0.7499.192/linux64/chrome-linux64.zip \
-          -o /tmp/chrome.zip \
-          && unzip /tmp/chrome.zip -d /opt/chrome \
-          && rm -f /tmp/chrome.zip
-
-      # Permissions for OpenShift non-root UID
-      RUN chmod -R 755 /opt/chrome \
-          && mkdir -p /app /tmp/chrome /home/chromeuser \
-          && chmod -R g+rwX /app /tmp /home/chromeuser \
-          && chown -R 1000:0 /opt/chrome /app /tmp /home/chromeuser
-
-      # Add chrome to PATH
-      ENV PATH="/opt/chrome/chrome-linux64:${PATH}"
-      ENV HOME=/home/chromeuser
-      ENV TMPDIR=/tmp
-      ENV CHROME_USER_DATA_DIR=/tmp/chrome
-
-      WORKDIR /app
-
-      USER 1000
-
-      CMD ["bash"]
-  strategy:
-    type: Docker
-  output:
-    to:
-      kind: ImageStreamTag
-      name: jdk17-chrome:latest
----
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: nginx
----
-apiVersion: build.openshift.io/v1
-kind: BuildConfig
-metadata:
-  name: nginx
-spec:
-  source:
-    type: Dockerfile
-    dockerfile: |
-      FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
-  
-      USER 0
-      
-      RUN microdnf install -y \
-        gcc gcc-c++ make \
-        wget tar gzip \
-        pcre-devel openssl-devel zlib-devel \
-        perl \
-        && microdnf clean all
-
-      WORKDIR /opt
-      
-      RUN wget https://openresty.org/download/openresty-1.21.4.1.tar.gz \
-          && tar xzf openresty-1.21.4.1.tar.gz \
-          && cd openresty-1.21.4.1 \
-          && ./configure \
-              --with-luajit \
-              --with-http_ssl_module \
-              --with-http_v2_module \
-              --with-http_stub_status_module \
-          && make -j$(nproc) \
-          && make install \
-          && cd / \
-          && rm -rf /opt/openresty-1.21.4.1*
-
-      ENV PATH="/usr/local/openresty/bin:/usr/local/openresty/luajit/bin:${PATH}"
-      RUN mkdir -p /usr/local/openresty/nginx/logs   \
-          && chown -R 1001:0 /usr/local/openresty \
-          && chmod -R g+rwX /usr/local/openresty
-
-      USER 1001
-      CMD ["/usr/local/openresty/bin/openresty", "-g", "daemon off;"]
-  strategy:
-    type: Docker
-  output:
-    to:
-      kind: ImageStreamTag
-      name: nginx:latest
 ---
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -128,33 +31,10 @@ metadata:
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
+  name: browser-service-registry
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
   name: test-runner-slave
----
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: springboot-b2i
----
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: no-code-ai-automation
----
-apiVersion: build.openshift.io/v1
-kind: BuildConfig
-metadata:
-  name: springboot-b2i
-spec:
-  source:
-    type: Binary
-  strategy:
-    type: Source
-    sourceStrategy:
-      from:
-        kind: ImageStreamTag
-        name: jdk17-slim:latest
-  output:
-    to:
-      kind: ImageStreamTag
-      name: springboot-b2i:latest
 ---

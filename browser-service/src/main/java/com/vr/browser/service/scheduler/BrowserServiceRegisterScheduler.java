@@ -50,7 +50,7 @@ public class BrowserServiceRegisterScheduler {
                 .onStatus(HttpStatusCode::is5xxServerError,
                         clientResponse -> Mono.error(new ServerException("Server error while sending hear beat to registry" + clientResponse)))
                 .bodyToMono(HeartBeatResponse.class)
-                .doOnSuccess(heartBeatResponse -> log.info("Heart beat sent {}", heartBeatResponse))
+                .doOnSuccess(heartBeatResponse -> log.debug("Heart beat sent {}", heartBeatResponse))
                 .doOnError(throwable -> log.error("Error while sending heart beat", throwable))
                 .block();
     }
@@ -68,7 +68,7 @@ public class BrowserServiceRegisterScheduler {
                         clientResponse -> Mono.error(new ServerException("Server error while registering with registry" + clientResponse)))
                 .bodyToMono(RegistryResponse.class)
                 .doOnSuccess(response -> {
-                    log.info("Service will register with id : {}, message: {}", id, response.message());
+                    log.debug("Service will register with id : {}, message: {}", id, response.message());
                     id = response.id();
                 })
                 .doOnError(throwable -> log.error("Unable to get the registration id"))

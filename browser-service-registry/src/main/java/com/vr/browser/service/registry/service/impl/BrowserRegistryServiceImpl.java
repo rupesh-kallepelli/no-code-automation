@@ -88,6 +88,9 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
     @Override
     public Mono<BrowserSessionResponse> requestBrowserSession(BrowserRequest browserRequest) {
         RegisterRequest healthyService = findHealthyService(browserRequest);
+
+        log.info("Healthy service : " + healthyService);
+
         //requesting for new session from healthy service
         return WebClient.builder()
                 .baseUrl("http://" + healthyService.ipAddress() + ":" + healthyService.port()).build()
@@ -203,7 +206,7 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                 String registrationKey = BROWSER_SERVICE + registrationId;
                 redisTemplate.delete(registrationKey);
 
-                log.info("Evicted stale registration: {}", registrationId);
+                log.debug("Evicted stale registration: {}", registrationId);
             }
         });
     }

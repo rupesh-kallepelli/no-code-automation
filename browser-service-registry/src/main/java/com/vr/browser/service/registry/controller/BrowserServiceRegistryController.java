@@ -31,7 +31,7 @@ public class BrowserServiceRegistryController {
     @Operation(description = "Register the browser session")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest registerRequest) {
         try {
-            log.info("Registering the browser service with request : {}", registerRequest);
+            log.debug("Registering the browser service with request : {}", registerRequest);
             RegistryResponse register = browserRegistryService.register(registerRequest);
             return ResponseEntity.ok(register);
         } catch (RegistrationException e) {
@@ -44,7 +44,7 @@ public class BrowserServiceRegistryController {
     @Operation(description = "Register the browser session")
     public ResponseEntity<?> hearBeat(@RequestBody HeartBeatRequest heartBeatRequest) {
         try {
-            log.info("Heart beat received from the service : {}", heartBeatRequest);
+            log.debug("Heart beat received from the service : {}", heartBeatRequest);
             return ResponseEntity.ok(browserRegistryService.heartBeat(heartBeatRequest));
         } catch (RegistrationException e) {
             log.error("Exception while listening to hear-beat of the service with id : {}", heartBeatRequest, e);

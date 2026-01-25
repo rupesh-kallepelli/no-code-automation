@@ -1,12 +1,13 @@
 package com.vr.test.runner.slave.util;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketSession;
+import reactor.core.publisher.Mono;
 
 @Component
-public class ScreencastSocketHandler extends TextWebSocketHandler {
+public class ScreencastSocketHandler implements WebSocketHandler {
 
     private final ScreencastBroadcaster broadcaster;
 
@@ -15,12 +16,10 @@ public class ScreencastSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    public @NonNull Mono<Void> handle(WebSocketSession session) {
         broadcaster.register(session);
-    }
-
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        broadcaster.unregister(session);
+        return session.receive()
+                .doFinally(signal -> broadcaster.unregister(session))
+                .then();
     }
 }

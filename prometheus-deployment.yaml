@@ -1,0 +1,158 @@
+###########################################
+# ServiceAccount for Prometheus
+###########################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: kallepallirupesh-dev
+---
+###########################################
+# Role + RoleBinding (namespace-scoped)
+###########################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-pod-reader
+  namespace: kallepallirupesh-dev
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-pod-reader-binding
+  namespace: kallepallirupesh-dev
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: kallepallirupesh-dev
+roleRef:
+  kind: Role
+  name: prometheus-pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+###########################################
+# Prometheus Deployment
+###########################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: kallepallirupesh-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/prometheus
+            - name: prometheus-data
+              mountPath: /prometheus
+      volumes:
+        - name: config-volume
+          configMap:
+            name: prometheus-config
+        - name: prometheus-data
+          emptyDir: {}
+---
+###########################################
+# Prometheus Service
+###########################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: kallepallirupesh-dev
+spec:
+  ports:
+    - port: 9090
+      targetPort: 9090
+  selector:
+    app: prometheus
+---
+###########################################
+# Prometheus ConfigMap
+###########################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: kallepallirupesh-dev
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      scrape_timeout: 10s
+
+    scrape_configs:
+      # 1️⃣ Scrape browser-service pods JVM metrics
+      - job_name: 'browser-service-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - kallepallirupesh-dev
+        relabel_configs:
+          # Keep only pods with label app=browser-service
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: browser-service
+            action: keep
+          # Set __address__ to pod IP:8080
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: ${1}:8080
+          # Force correct path
+          - target_label: __metrics_path__
+            replacement: /actuator/prometheus
+
+      # 2️⃣ Scrape container metrics via kubelet/cAdvisor
+      - job_name: 'kubernetes-cadvisor'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        metrics_path: /metrics/cadvisor
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          # Only scrape containers in your namespace
+          - source_labels: [__meta_kubernetes_node_label_kubernetes_io_hostname]
+            regex: .*
+            action: keep
+
+---
+###########################################
+# Prometheus Route (OpenShift)
+###########################################
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: prometheus
+  namespace: kallepallirupesh-dev
+spec:
+  to:
+    kind: Service
+    name: prometheus
+    weight: 100
+  port:
+    targetPort: 9090
+  tls:
+    termination: edge

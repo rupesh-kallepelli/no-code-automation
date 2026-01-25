@@ -1,8 +1,9 @@
 package com.vr.browser.service.registry.controller;
 
 import com.vr.browser.service.registry.exception.RegistrationException;
+import com.vr.browser.service.registry.request.BrowserRequest;
+import com.vr.browser.service.registry.request.HeartBeatRequest;
 import com.vr.browser.service.registry.request.RegisterRequest;
-import com.vr.browser.service.registry.response.HeartBeatResponse;
 import com.vr.browser.service.registry.response.RegistryResponse;
 import com.vr.browser.service.registry.service.BrowserRegistryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
         description = "This controller is used for registering the browser service and listening to the heartbeats of the browser"
 )
 public class BrowserServiceRegistryController {
+
     private final BrowserRegistryService browserRegistryService;
 
     public BrowserServiceRegistryController(BrowserRegistryService browserRegistryService) {
@@ -38,14 +40,36 @@ public class BrowserServiceRegistryController {
         }
     }
 
-    @PostMapping("heart-beat/{id}")
+    @PostMapping("heart-beat")
     @Operation(description = "Register the browser session")
-    public ResponseEntity<?> hearBeat(@PathVariable("id") String id) {
+    public ResponseEntity<?> hearBeat(@RequestBody HeartBeatRequest heartBeatRequest) {
         try {
-            log.info("Heart beat received from the service : {}", id);
-            return ResponseEntity.ok(new HeartBeatResponse());
+            log.info("Heart beat received from the service : {}", heartBeatRequest);
+            return ResponseEntity.ok(browserRegistryService.heartBeat(heartBeatRequest));
         } catch (RegistrationException e) {
-            log.error("Exception while listening to hear-beat of the service with id : {}", id, e);
+            log.error("Exception while listening to hear-beat of the service with id : {}", heartBeatRequest, e);
+            return ResponseEntity.badRequest().body(e);
+        }
+    }
+
+    @GetMapping("sessions")
+    @Operation(description = "List all the browser sessions")
+    public ResponseEntity<?> getRegisteredServices() {
+        try {
+            return ResponseEntity.ok(browserRegistryService.getRegisteredServices());
+        } catch (RegistrationException e) {
+            log.error("Exception while getting all registered service", e);
+            return ResponseEntity.badRequest().body(e);
+        }
+    }
+
+    @PostMapping("sessions")
+    @Operation(description = "Request for new browser session")
+    public ResponseEntity<?> requestBrowserSession(@RequestBody BrowserRequest browserRequest) {
+        try {
+            return ResponseEntity.ok(browserRegistryService.requestBrowserSession(browserRequest));
+        } catch (RegistrationException e) {
+            log.error("Exception while getting all registered service", e);
             return ResponseEntity.badRequest().body(e);
         }
     }

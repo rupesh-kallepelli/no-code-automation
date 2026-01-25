@@ -3,6 +3,8 @@ package com.vr.browser.service.registry;
 import com.vr.browser.service.exception.NoSuchSession;
 import com.vr.launcher.v1.BrowserDetails;
 import com.vr.launcher.v1.BrowserLauncher;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -11,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@Slf4j
 @Component
 public class BrowserRegistry {
 
@@ -72,7 +75,15 @@ public class BrowserRegistry {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    public Integer activeSessionCount() {
+        return browser_cache.size();
+    }
 
+    @PreDestroy
+    public void destroy() {
+        this.killAll();
+        log.info("Killed all the active sessions before shutdown");
     }
 }

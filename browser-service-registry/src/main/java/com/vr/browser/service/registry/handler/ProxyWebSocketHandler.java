@@ -1,7 +1,8 @@
 package com.vr.browser.service.registry.handler;
 
 import com.vr.browser.service.registry.client.PlainBackendWebSocketClient;
-import com.vr.browser.service.registry.util.BackendServiceRegistry;
+import com.vr.browser.service.registry.util.BrowserServiceWSRegistry;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
@@ -13,15 +14,20 @@ import java.net.URI;
 @Component
 public class ProxyWebSocketHandler implements WebSocketHandler {
 
-    private final BackendServiceRegistry registry;
+    private final BrowserServiceWSRegistry registry;
 
-    public ProxyWebSocketHandler(BackendServiceRegistry registry) {
+    public ProxyWebSocketHandler(BrowserServiceWSRegistry registry) {
         this.registry = registry;
     }
 
     @Override
-    public Mono<Void> handle(WebSocketSession session) {
-        URI backendUri = URI.create(registry.getPodUrl("pod-1"));
+    public @NonNull Mono<Void> handle(WebSocketSession session) {
+
+        String query = session.getHandshakeInfo().getUri().getQuery();
+
+        String sessionId = query.substring(query.indexOf("=") + 1);
+
+        URI backendUri = URI.create(registry.getSocketUrl(sessionId));
 
         PlainBackendWebSocketClient backendClient =
                 new PlainBackendWebSocketClient(

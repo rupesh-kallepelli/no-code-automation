@@ -5,5 +5,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record RegisterRequest(
         @NotBlank String ipAddress,
-        @NotNull Integer port) {
+        @NotNull Integer port,
+        @NotNull BrowserType browserType) {
 }

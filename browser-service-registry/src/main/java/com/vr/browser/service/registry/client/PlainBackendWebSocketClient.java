@@ -1,5 +1,6 @@
 package com.vr.browser.service.registry.client;
 
+import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -7,12 +8,13 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
+@Slf4j
 public class PlainBackendWebSocketClient extends WebSocketClient
         implements BackendWsClient {
 
-    private Consumer<String> onText;
-    private Consumer<ByteBuffer> onBinary;
-    private Runnable onClose;
+    private final Consumer<String> onText;
+    private final Consumer<ByteBuffer> onBinary;
+    private final Runnable onClose;
 
     public PlainBackendWebSocketClient(
             URI uri,
@@ -49,7 +51,7 @@ public class PlainBackendWebSocketClient extends WebSocketClient
 
     @Override
     public void onError(Exception ex) {
-        ex.printStackTrace();
+        log.error("", ex);
     }
 
     @Override

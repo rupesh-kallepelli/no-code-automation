@@ -14,8 +14,7 @@ public abstract class BrowserService {
             String newHost,
             String port,
             String sessionId
-    )
-            throws URISyntaxException {
+    ) throws URISyntaxException {
 
         if (originalUrl == null || originalUrl.isEmpty()) {
             throw new IllegalArgumentException("Original URL cannot be null or empty.");
@@ -26,15 +25,8 @@ public abstract class BrowserService {
 
         URI originalUri = new URI(originalUrl);
 
-        String scheme = originalUri.getScheme();
-        if ("ws".equalsIgnoreCase(scheme)) {
-            scheme = "wss";
-        } else if ("http".equalsIgnoreCase(scheme)) {
-            scheme = "https";
-        }
-
         URI updatedUri = new URI(
-                scheme,      // ws / wss / http / https
+                originalUri.getScheme(),      // ws / wss / http / https
                 originalUri.getUserInfo(),
                 newHost,
                 Integer.parseInt(port), //change to newPort in local

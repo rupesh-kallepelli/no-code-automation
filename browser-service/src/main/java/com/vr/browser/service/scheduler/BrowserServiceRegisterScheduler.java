@@ -2,6 +2,9 @@ package com.vr.browser.service.scheduler;
 
 import com.vr.browser.service.exception.ClientException;
 import com.vr.browser.service.exception.ServerException;
+import com.vr.browser.service.registry.BrowserRegistry;
+import com.vr.browser.service.request.BrowserType;
+import com.vr.browser.service.request.HeartBeatRequest;
 import com.vr.browser.service.request.RegisterRequest;
 import com.vr.browser.service.response.HeartBeatResponse;
 import com.vr.browser.service.response.RegistryResponse;
@@ -22,26 +25,30 @@ public class BrowserServiceRegisterScheduler {
     private final String ipAddress;
     private final Integer port;
     private String id;
+    private final BrowserRegistry browserRegistry;
 
     public BrowserServiceRegisterScheduler(
             @Qualifier("registryClient") WebClient registryClient,
             @Value("${ip.address:127.0.0.1}") String ipAddress,
-            @Value("${server.port}") Integer port) {
+            @Value("${server.port}") Integer port,
+            BrowserRegistry browserRegistry) {
         this.registryClient = registryClient;
         this.ipAddress = ipAddress;
         this.port = port;
+        this.browserRegistry = browserRegistry;
     }
 
     @Scheduled(fixedRate = 3000)
     public void register() {
         registryClient.
                 post()
-                .uri("/heart-beat/" + id)
+                .uri("/heart-beat")
+                .bodyValue(new HeartBeatRequest(id, browserRegistry.activeSessionCount()))
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        clientResponse -> Mono.error(new ClientException("Client error while registering with registry" + clientResponse)))
+                        clientResponse -> Mono.error(new ClientException("Client error while sending hear beat to registry" + clientResponse)))
                 .onStatus(HttpStatusCode::is5xxServerError,
-                        clientResponse -> Mono.error(new ServerException("Server error while registering with registry" + clientResponse)))
+                        clientResponse -> Mono.error(new ServerException("Server error while sending hear beat to registry" + clientResponse)))
                 .bodyToMono(HeartBeatResponse.class)
                 .doOnSuccess(heartBeatResponse -> log.info("Heart beat sent {}", heartBeatResponse))
                 .doOnError(throwable -> log.error("Error while sending heart beat", throwable))
@@ -53,7 +60,7 @@ public class BrowserServiceRegisterScheduler {
         RegistryResponse registryResponse = registryClient.
                 post()
                 .uri("/register")
-                .bodyValue(new RegisterRequest(ipAddress, port))
+                .bodyValue(new RegisterRequest(ipAddress, port, BrowserType.CHROME))
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
                         clientResponse -> Mono.error(new ClientException("Client error while registering with registry" + clientResponse)))

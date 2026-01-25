@@ -15,7 +15,7 @@ public class WebSocketConfig {
     @Bean
     public SimpleUrlHandlerMapping handlerMapping(ProxyWebSocketHandler proxyHandler) {
         Map<String, WebSocketHandler> map = Map.of(
-                "/ws/proxy", proxyHandler
+                "/ws", proxyHandler
         );
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
         mapping.setUrlMap(map);

@@ -18,9 +18,14 @@ management:
   endpoint:
     health:
       show-details: always
+max:
+  session:
+    threshold: ${MAX_SESSION_THRESHOLD:3}
+registry:
+  host: browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    path: /v1/api-docs
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: alpha

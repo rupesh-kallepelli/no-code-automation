@@ -1,4 +1,10 @@
 package com.vr.browser.service.registry.request;
 
-public record HeartBeatRequest(String id, Integer activeSessionCount) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record HeartBeatRequest(
+        @NotBlank(message = "Id can't be empty or blank or null") String id,
+        @NotNull(message = "activeSessionCount can't be null") Integer activeSessionCount
+) {
 }

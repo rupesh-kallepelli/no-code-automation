@@ -1,5 +1,6 @@
 package com.vr.browser.service.controller;
 
+import com.vr.browser.service.exception.NoBrowserSupportYetException;
 import com.vr.browser.service.registry.BrowserRegistry;
 import com.vr.browser.service.request.BrowserRequest;
 import com.vr.browser.service.response.BrowserSessionResponse;
@@ -34,7 +35,8 @@ public class BrowserSessionController {
 
 
     @PostMapping("sessions")
-    @Operation(description = "Creating the browser instances")
+    @Operation(description = "Creating the browser instance, " +
+            "provide required browser type to create the instance")
     public ResponseEntity<?> createSession(@RequestBody @Valid BrowserRequest browserRequest) {
         log.debug("Received browser request : {}", browserRequest);
         try {
@@ -42,6 +44,9 @@ public class BrowserSessionController {
             BrowserSessionResponse browserSessionResponse = browserService.launchBrowser(browserRequest);
             log.debug("Started the browser successfully with websocket url : {}", browserSessionResponse);
             return ResponseEntity.status(HttpStatus.CREATED).body(browserSessionResponse);
+        } catch (NoBrowserSupportYetException ex) {
+            log.error("Couldn't start the browser session", ex);
+            return ResponseEntity.badRequest().body("Couldn't start the browser session : " + ex.getMessage());
         } catch (Exception e) {
             log.error("Couldn't start the browser session", e);
             return ResponseEntity.internalServerError().body("Couldn't start the browser session : " + e.getMessage());
@@ -49,7 +54,8 @@ public class BrowserSessionController {
     }
 
     @DeleteMapping("sessions/{sessionId}")
-    @Operation(description = "Killing the browser instances with give id")
+    @Operation(description = "Killing the browser instances created using the sessions api, " +
+            "provide the session you obtained from sessions api to kill the session")
     public ResponseEntity<?> closeSession(@PathVariable String sessionId) {
         browserRegistry.killBrowserProcess(sessionId);
         return ResponseEntity.ok(new SessionDeleteResponse(sessionId, "terminated"));

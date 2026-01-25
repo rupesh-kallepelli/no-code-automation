@@ -1,5 +1,6 @@
-package com.vr.browser.service.registry.request;
+package com.vr.browser.service.registry.response;
 
+import com.vr.browser.service.registry.request.BrowserType;
 import lombok.Data;
 
 @Data

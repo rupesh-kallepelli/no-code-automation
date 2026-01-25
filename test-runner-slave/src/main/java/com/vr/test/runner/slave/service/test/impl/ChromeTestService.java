@@ -8,14 +8,15 @@ import com.vr.test.runner.slave.browser.response.BrowserSessionResponse;
 import com.vr.test.runner.slave.exceptions.ClientSideException;
 import com.vr.test.runner.slave.exceptions.ServerSideException;
 import com.vr.test.runner.slave.util.ScreencastBroadcaster;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 @Scope("prototype")
 public class ChromeTestService extends ChromiumTestService {
@@ -61,11 +62,18 @@ public class ChromeTestService extends ChromiumTestService {
 
     @Override
     public void close(String id) {
-        ResponseEntity<Void> block = browserClient.delete()
-                .uri("/api/v1/sessions/" + id)
+        browserClient.delete()
+                .uri("/sessions/" + id)
                 .retrieve()
-                .toEntity(Void.class)
-                .block();
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        clientResponse -> Mono.error(() -> new ClientSideException("Client side error while closing session : " + clientResponse))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError,
+                        clientResponse -> Mono.error(() -> new ServerSideException("Server side error while closing session : " + clientResponse))
+                )
+                .bodyToMono(Void.class)
+                .doOnSuccess(v -> log.info("Closed connection : {}", id))
+                .doOnError(throwable -> log.error("Error while closing connection : {}", id));
     }
 
 

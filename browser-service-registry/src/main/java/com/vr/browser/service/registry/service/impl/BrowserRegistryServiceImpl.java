@@ -2,16 +2,14 @@ package com.vr.browser.service.registry.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.browser.service.registry.exception.ClientSideException;
-import com.vr.browser.service.registry.exception.NoActiveSessionsException;
-import com.vr.browser.service.registry.exception.NoHealthyServiceFoundException;
-import com.vr.browser.service.registry.exception.RegistrationException;
+import com.vr.browser.service.registry.exception.*;
 import com.vr.browser.service.registry.request.BrowserRequest;
-import com.vr.browser.service.registry.request.BrowserSessionResponse;
 import com.vr.browser.service.registry.request.HeartBeatRequest;
 import com.vr.browser.service.registry.request.RegisterRequest;
+import com.vr.browser.service.registry.response.BrowserSessionResponse;
 import com.vr.browser.service.registry.response.HeartBeatResponse;
 import com.vr.browser.service.registry.response.RegistryResponse;
+import com.vr.browser.service.registry.response.SessionDeleteResponse;
 import com.vr.browser.service.registry.service.BrowserRegistryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +32,7 @@ import static com.vr.browser.service.registry.constants.Constants.*;
 @Service
 public class BrowserRegistryServiceImpl implements BrowserRegistryService {
 
+    public static final String BROWSER_SESSION_DETAILS = "browser-session-details:";
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     private final int thresholdLimit;
@@ -100,11 +99,11 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                 .retrieve()
                 .onStatus(
                         HttpStatusCode::is4xxClientError,
-                        clientResponse -> Mono.error(new ClientSideException("Couldn't make request to browser service due to client side exception"))
+                        clientResponse -> Mono.error(new ClientSideException("Couldn't make request to browser service due to client side exception" + clientResponse))
                 )
                 .onStatus(
                         HttpStatusCode::is5xxServerError,
-                        clientResponse -> Mono.error(new ClientSideException("Couldn't make request to browser service due to server side exception"))
+                        clientResponse -> Mono.error(new ServerSideException("Couldn't make request to browser service due to server side exception" + clientResponse))
                 )
                 .bodyToMono(BrowserSessionResponse.class)
                 .map(browserSessionResponse -> {
@@ -114,16 +113,42 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
 
                         //registering the browser service ws url
                         redisTemplate.opsForValue().set(BROWSER_SERVICE_WS + browserSessionResponse.getSessionId(), sessionUrl.toString());
+                        //registering the browser session details
+                        redisTemplate.opsForValue().set(BROWSER_SESSION_DETAILS + browserSessionResponse.getSessionId(), objectMapper.writeValueAsString(browserSessionResponse));
 
                         URI newSocketUrl = getNewSocketUrl(sessionUrl);
 
                         browserSessionResponse.setWsUrl(newSocketUrl.toString());
 
                         return browserSessionResponse;
-                    } catch (URISyntaxException e) {
+                    } catch (URISyntaxException | JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
                 });
+    }
+
+    @Override
+    public Mono<SessionDeleteResponse> killBrowserSession(String sessionId) {
+        try {
+            //fetching browser session details
+            String browserSessionDetails = redisTemplate.opsForValue().get(BROWSER_SESSION_DETAILS + sessionId);
+            BrowserSessionResponse browserSessionResponse = objectMapper.readValue(browserSessionDetails, BrowserSessionResponse.class);
+            return WebClient.builder()
+                    .baseUrl("http://" + browserSessionResponse.getAddress() + ":" + browserSessionResponse.getPort()).build()
+                    .delete()
+                    .uri(BROWSER_SERVICE_SESSION_PATH + "/" + sessionId)
+                    .retrieve()
+                    .onStatus(
+                            HttpStatusCode::is4xxClientError,
+                            clientResponse -> Mono.error(new ClientSideException("Couldn't make request to browser service for killing session %s due to client side exception : ".formatted(sessionId)))
+                    )
+                    .onStatus(
+                            HttpStatusCode::is5xxServerError,
+                            clientResponse -> Mono.error(new ServerSideException("Couldn't make request to browser service for killing session %s due to server side exception : ".formatted(sessionId) + clientResponse))
+                    ).bodyToMono(SessionDeleteResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private URI getNewSocketUrl(URI sessionUrl) throws URISyntaxException {
@@ -189,7 +214,10 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
             String heartBeatTrackerKey = HEART_BEAT + BROWSER_SERVICE + registrationId;
 
             String lastHeartBeat = redisTemplate.opsForValue().get(heartBeatTrackerKey);
-            if (lastHeartBeat == null) return; // maybe already removed
+            if (lastHeartBeat == null) {//heart beats might not have received, need eviction from the browser-service-ids
+                redisTemplate.opsForSet().remove(BROWSER_SERVICE_IDS, registrationId);
+                return;
+            }
 
             String[] heartBeatArgs = lastHeartBeat.split(":");
             long timestamp = Long.parseLong(heartBeatArgs[0]);

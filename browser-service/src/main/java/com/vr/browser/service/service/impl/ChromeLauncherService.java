@@ -67,8 +67,8 @@ public class ChromeLauncherService extends BrowserService {
                 chromeDetails.getId(),
                 BrowserType.CHROME,
                 reWrittenUrl,
-                LOCAL_HOST,
-                port
+                ipAddress,
+                serverPort
         );
     }
 

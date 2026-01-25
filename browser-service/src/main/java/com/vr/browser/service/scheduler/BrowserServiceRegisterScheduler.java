@@ -68,7 +68,7 @@ public class BrowserServiceRegisterScheduler {
                         clientResponse -> Mono.error(new ServerException("Server error while registering with registry" + clientResponse)))
                 .bodyToMono(RegistryResponse.class)
                 .doOnSuccess(response -> {
-                    log.info("Service will register with id : {}, meessage: {}", id, response.message());
+                    log.info("Service will register with id : {}, message: {}", id, response.message());
                     id = response.id();
                 })
                 .doOnError(throwable -> log.error("Unable to get the registration id"))

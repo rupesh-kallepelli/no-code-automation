@@ -30,7 +30,7 @@ podSecurityContext: { }
 securityContext: { }
   # capabilities:
   #   drop:
-  #   - ALL
+#   - ALL
 # readOnlyRootFilesystem: true
 # runAsNonRoot: true
 # runAsUser: 1000
@@ -42,20 +42,20 @@ service:
 ingress:
   enabled: true
   className: "nginx"
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-  hosts:
-    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: browser-service
-                port:
-                  number: 8080
-  tls: [ ]
+#  annotations:
+#    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#  hosts:
+#    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: browser-service
+#                port:
+#                  number: 8080
+#  tls: [ ]
   # - secretName: chart-example-tls
   #   hosts:
   #     - chart-example.local
@@ -63,7 +63,7 @@ ingress:
 resources: { }
   # limits:
   #   cpu: 100m
-  #   memory: 128Mi
+#   memory: 128Mi
 # requests:
 #   cpu: 100m
 #   memory: 128Mi
@@ -89,18 +89,18 @@ autoscaling:
   targetMemoryUtilizationPercentage: 70
 
 volumes:
-  - name: dshm
-    emptyDir:
-      medium: Memory
-      sizeLimit: 1Gi
-  - name: chrome-data
-    emptyDir: { }
+#  - name: dshm
+#    emptyDir:
+#      medium: Memory
+#      sizeLimit: 1Gi
+#  - name: chrome-data
+#    emptyDir: { }
 
 volumeMounts:
-  - name: dshm
-    mountPath: /dev/shm
-  - name: chrome-data
-    mountPath: /tmp/chrome
+#  - name: dshm
+#    mountPath: /dev/shm
+#  - name: chrome-data
+#    mountPath: /tmp/chrome
 
 nodeSelector: { }
 

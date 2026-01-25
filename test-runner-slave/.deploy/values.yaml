@@ -19,17 +19,18 @@ serviceAccount:
   name: ""
 
 podAnnotations:
-  prometheus.io/path: /actuator/prometheus
+  prometheus.io/path: "/actuator/prometheus"
   prometheus.io/port: "8080"
   prometheus.io/scrape: "true"
-podLabels: { }
+podLabels:
+  app: test-runner-slave
 
 podSecurityContext: { }
 # fsGroup: 2000
 
 securityContext: { }
   # capabilities:
-  #   drop:
+#   drop:
 #   - ALL
 # readOnlyRootFilesystem: true
 # runAsNonRoot: true
@@ -38,6 +39,7 @@ securityContext: { }
 service:
   type: ClusterIP
   port: 80
+  targetPort: 8080
 
 ingress:
   enabled: true

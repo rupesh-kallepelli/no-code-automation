@@ -19,10 +19,11 @@ serviceAccount:
   name: ""
 
 podAnnotations:
-  prometheus.io/path: /actuator/prometheus
+  prometheus.io/path: "/actuator/prometheus"
   prometheus.io/port: "8080"
   prometheus.io/scrape: "true"
-podLabels: { }
+podLabels:
+  app: browser-service-registry
 
 podSecurityContext: { }
 # fsGroup: 2000
@@ -38,6 +39,7 @@ securityContext: { }
 service:
   type: ClusterIP
   port: 80
+  targetPort: 8080
 
 ingress:
   enabled: true

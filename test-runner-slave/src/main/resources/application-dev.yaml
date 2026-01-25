@@ -34,4 +34,4 @@ management:
     readinessstate:
       enabled: true
 browser:
-  service: http://browser-registry-service/api/v1
+  service: https://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/api/v1

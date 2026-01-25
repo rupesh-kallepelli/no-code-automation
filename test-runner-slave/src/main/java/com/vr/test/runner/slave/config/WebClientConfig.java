@@ -8,16 +8,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-    private final String browserService;
+    private final String browserServiceHost;
 
-    public WebClientConfig(@Value("${browser.service}") String browserService) {
-        this.browserService = browserService;
+    public WebClientConfig(
+            @Value("${browser.service}") String browserService
+    ) {
+        this.browserServiceHost = browserService;
     }
 
     @Bean
     public WebClient browserClient() {
         return WebClient.builder()
-                .baseUrl(browserService)
+                .baseUrl(browserServiceHost)
                 .build();
     }
 }

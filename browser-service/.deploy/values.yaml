@@ -19,10 +19,11 @@ serviceAccount:
   name: ""
 
 podAnnotations:
-  prometheus.io/path: /actuator/prometheus
+  prometheus.io/path: "/actuator/prometheus"
   prometheus.io/port: "8080"
   prometheus.io/scrape: "true"
-podLabels: { }
+podLabels:
+  app: browser-service
 
 podSecurityContext: { }
 # fsGroup: 2000
@@ -38,24 +39,25 @@ securityContext: { }
 service:
   type: ClusterIP
   port: 80
+  targetPort: 8080
 
 ingress:
   enabled: true
   className: "nginx"
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-  hosts:
-    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: browser-service
-                port:
-                  number: 8080
-  tls: [ ]
+#  hosts:
+#    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: browser-service
+#                port:
+#                  number: 8080
+#  tls: [ ]
   # - secretName: chart-example-tls
   #   hosts:
   #     - chart-example.local

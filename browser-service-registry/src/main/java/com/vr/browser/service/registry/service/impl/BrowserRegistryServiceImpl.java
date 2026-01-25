@@ -85,7 +85,8 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
         return Objects.requireNonNull(redisTemplate.opsForSet().members(BROWSER_SERVICE_IDS));
     }
 
-    public Mono<String> requestBrowserSession(BrowserRequest browserRequest) {
+    @Override
+    public Mono<BrowserSessionResponse> requestBrowserSession(BrowserRequest browserRequest) {
         RegisterRequest healthyService = findHealthyService(browserRequest);
         //requesting for new session from healthy service
         return WebClient.builder()
@@ -106,14 +107,16 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                 .map(browserSessionResponse -> {
                     try {
                         //fetching websocket url of healthy browser service
-                        URI sessionUrl = new URI(browserSessionResponse.wsUrl());
+                        URI sessionUrl = new URI(browserSessionResponse.getWsUrl());
 
                         //registering the browser service ws url
-                        redisTemplate.opsForValue().set(BROWSER_SERVICE_WS + browserSessionResponse.sessionId(), sessionUrl.toString());
+                        redisTemplate.opsForValue().set(BROWSER_SERVICE_WS + browserSessionResponse.getSessionId(), sessionUrl.toString());
 
                         URI newSocketUrl = getNewSocketUrl(sessionUrl);
 
-                        return newSocketUrl.toString();
+                        browserSessionResponse.setWsUrl(newSocketUrl.toString());
+
+                        return browserSessionResponse;
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }

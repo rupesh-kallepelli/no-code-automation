@@ -1,5 +1,6 @@
 package com.vr.test.runner.slave.controller;
 
+import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.page.Page;
 import com.vr.test.runner.slave.request.TestPlan;
 import com.vr.test.runner.slave.request.enums.Browser;
@@ -10,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
+import java.io.FileOutputStream;
 
 @RestController
 @RequestMapping("api/v1")
@@ -25,26 +26,43 @@ public class TestController {
     }
 
     @GetMapping("test-run")
-    public Mono<?> runTest() throws Exception {
+    public Mono<?> runTest() {
         TestService testService = testServiceFactory.getTestService(Browser.CHROME);
-        Page page = testService.launch();
-        page.cast(
-                "jpeg",
-                50,
-                1920,
-                1080
-        );
-        UUID uuid = UUID.randomUUID();
-        page.navigate("https://opensource-demo.orangehrmlive.com/");
-        page.type("input[name='username']", "Admin");
-//        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
-        page.type("input[name='password']", "admin123");
-//        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
-        page.click("button[type='submit']");
-        Thread.sleep(5000);
-//        page.screenshot("screenshots/" + uuid + "/" + UUID.randomUUID() + ".png");
-        testService.close(page.getId());
-        return Mono.just("Test Completed");
+        return testService.launch().doOnSuccess(page -> {
+            try {
+                page.cast(
+                        "jpeg",
+                        50,
+                        1920,
+                        1080
+                );
+                page.navigate("https://opensource-demo.orangehrmlive.com/");
+                page.type("input[name='username']", "Admin");
+                screenshot(page);
+                page.type("input[name='password']", "admin123");
+                screenshot(page);
+                page.click("button[type='submit']");
+                Thread.sleep(5000);
+                screenshot(page);
+                testService.close(page.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).map(page -> "Test Completed");
+    }
+
+    private static void screenshot(Page page) throws Exception {
+        byte[] bytes = page.screenshot();
+        try (FileOutputStream fos = new FileOutputStream("screenshots/" + System.currentTimeMillis() + ".png")) {
+            fos.write(bytes);
+        }
+    }
+
+    private static void screenshot(Element element) throws Exception {
+        byte[] bytes = element.screenshot();
+        try (FileOutputStream fos = new FileOutputStream("screenshots/" + System.currentTimeMillis() + ".png")) {
+            fos.write(bytes);
+        }
     }
 
 }

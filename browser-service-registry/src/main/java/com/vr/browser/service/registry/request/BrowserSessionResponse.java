@@ -1,10 +1,12 @@
 package com.vr.browser.service.registry.request;
 
-public record BrowserSessionResponse(
-        String sessionId,
-        BrowserType browserType,
-        String wsUrl,
-        String address,
-        String port
-) {
+import lombok.Data;
+
+@Data
+public class BrowserSessionResponse {
+    private String sessionId;
+    private BrowserType browserType;
+    private String wsUrl;
+    private String address;
+    private String port;
 }

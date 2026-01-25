@@ -13,37 +13,32 @@ data:
       scrape_timeout: 10s
 
     scrape_configs:
-      # 1️⃣ Scrape browser-service pods JVM metrics
-      - job_name: 'browser-service-pods'
+      - job_name: 'all-pods-annotations'
         kubernetes_sd_configs:
           - role: pod
             namespaces:
               names:
                 - {{ .Values.namespace }}
         relabel_configs:
-          # Keep only pods with label app=browser-service
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            regex: browser-service
+          # Only scrape pods with prometheus.io/scrape=true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            regex: true
             action: keep
-          # Set __address__ to pod IP:8080
-          - source_labels: [__meta_kubernetes_pod_ip]
-            target_label: __address__
-            replacement: ${1}:8080
-          # Force correct path
-          - target_label: __metrics_path__
-            replacement: /actuator/prometheus
 
-      # 2️⃣ Scrape container metrics via kubelet/cAdvisor
-      - job_name: 'kubernetes-cadvisor'
-        kubernetes_sd_configs:
-          - role: node
-        scheme: https
-        metrics_path: /metrics/cadvisor
-        tls_config:
-          insecure_skip_verify: true
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        relabel_configs:
-          # Only scrape containers in your namespace
-          - source_labels: [__meta_kubernetes_node_label_kubernetes_io_hostname]
-            regex: .*
-            action: keep
+          # Set __address__ = podIP:port
+          - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            separator: ":"
+            target_label: __address__
+            regex: (.+);(.+)
+            replacement: $1:$2
+            action: replace
+
+          # Set metrics path
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            target_label: __metrics_path__
+
+          # Add pod and namespace labels for metrics queries
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod

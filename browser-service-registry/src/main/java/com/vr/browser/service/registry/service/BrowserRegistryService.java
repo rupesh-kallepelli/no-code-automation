@@ -1,6 +1,7 @@
 package com.vr.browser.service.registry.service;
 
 import com.vr.browser.service.registry.request.BrowserRequest;
+import com.vr.browser.service.registry.request.BrowserSessionResponse;
 import com.vr.browser.service.registry.request.HeartBeatRequest;
 import com.vr.browser.service.registry.request.RegisterRequest;
 import com.vr.browser.service.registry.response.HeartBeatResponse;
@@ -16,5 +17,5 @@ public interface BrowserRegistryService {
 
     Set<String> getRegisteredServices();
 
-    Mono<String> requestBrowserSession(BrowserRequest browserRequest);
+    Mono<BrowserSessionResponse> requestBrowserSession(BrowserRequest browserRequest);
 }

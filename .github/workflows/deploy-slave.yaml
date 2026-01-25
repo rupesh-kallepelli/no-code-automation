@@ -116,4 +116,7 @@ jobs:
 
       - name: Upgrading ${{ github.event.inputs.service }}
         run: |
-          helm upgrade -i ${{ github.event.inputs.service }} ./${{ github.event.inputs.service }}/.deploy/
+          helm upgrade -i ${{ github.event.inputs.service }} \
+            ./${{ github.event.inputs.service }}/.deploy/ \
+            --set namespace=${{ secrets.OPENSHIFT_NAMESPACE }} \
+            --set ocProject=${{ secrets.OPENSHIFT_CLUSTER }}

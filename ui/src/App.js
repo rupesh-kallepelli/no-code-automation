@@ -6,7 +6,6 @@ export default function App() {
 
   const [wsUrl, setWsUrl] = useState("");
   const [connected, setConnected] = useState(false);
-  const [running, setRunning] = useState(false);
 
   const connectWebSocket = () => {
     if (!wsUrl || connected) return;
@@ -60,21 +59,7 @@ export default function App() {
     };
   }, []);
 
-  const runTest = async () => {
-    if (running) return;
 
-    setRunning(true);
-    try {
-      await fetch(
-        "https://test-runner-slave-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/api/run-test",
-        { method: "GET" }
-      );
-    } catch (err) {
-      console.error("Failed to run test", err);
-    } finally {
-      setRunning(false);
-    }
-  };
 
   return (
     <div style={{ padding: 20, maxWidth: 1200, margin: "0 auto" }}>
@@ -106,14 +91,6 @@ export default function App() {
         )}
       </div>
 
-      {/* Run Test */}
-      <button
-        onClick={runTest}
-        disabled={running}
-        style={{ padding: "8px 16px", fontSize: 16 }}
-      >
-        {running ? "Running..." : "Run Test"}
-      </button>
 
       {/* Screencast */}
       <div style={{ marginTop: 30 }}>

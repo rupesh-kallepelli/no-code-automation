@@ -20,7 +20,7 @@ public class SmokeTest {
 //        System.out.println(chromeDetails.getWsUrl());
 
 
-        Page page = new ChromePage("12345", "wss://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/ws?session=5c6800d2-4523-4a7d-8ee1-64b4c7df5508");
+        Page page = new ChromePage("12345", "wss://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/ws?session=530ebbb0-9188-4f46-9749-3ad8aa5a6051");
         page.enable();
 
 //        page.cast(

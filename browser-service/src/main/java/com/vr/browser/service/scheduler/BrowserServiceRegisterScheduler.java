@@ -43,7 +43,9 @@ public class BrowserServiceRegisterScheduler {
         registryClient.
                 post()
                 .uri("/heart-beat")
-                .bodyValue(new HeartBeatRequest(id, browserRegistry.activeSessionCount()))
+                .bodyValue(new HeartBeatRequest(id, browserRegistry.activeSessionCount(),
+                        new RegisterRequest(ipAddress, port, BrowserType.CHROME))
+                )
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
                         clientResponse -> Mono.error(new ClientException("Client error while sending hear beat to registry" + clientResponse)))

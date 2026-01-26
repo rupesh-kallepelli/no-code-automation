@@ -56,7 +56,7 @@ public interface Page extends AutoCloseable {
 
     void disable() throws Exception;
 
-    String navigate(String url) throws Exception;
+    String navigate(String url);
 
     void reload() throws Exception;
 

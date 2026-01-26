@@ -10,6 +10,8 @@ import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.element.finder.ElementResolver;
 import com.vr.actions.v1.element.selector.Selector;
 import com.vr.actions.v1.page.Page;
+import com.vr.actions.v1.page.chromium.exception.BroadCasterCannotBeNull;
+import com.vr.actions.v1.page.chromium.exception.NavigationException;
 import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.client.broadcast.BroadCaster;
 import com.vr.cdp.client.ws.ScreenCastClient;
@@ -271,9 +273,13 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public String navigate(String url) throws Exception {
-        PageNavigate.Result r = client.sendAndWait(new PageNavigate(url));
-        return r.frameId();
+    public String navigate(String url) {
+        try {
+            PageNavigate.Result r = client.sendAndWait(new PageNavigate(url));
+            return r.frameId();
+        } catch (Exception e) {
+            throw new NavigationException("Unable to navigate due to :", e);
+        }
     }
 
     @Override

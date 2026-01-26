@@ -31,7 +31,7 @@ max:
   session:
     threshold: ${MAX_SESSION_THRESHOLD:3}
 registry:
-  host: browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
+  host: ${POD_IP:127.0.0.1}
 springdoc:
   api-docs:
     path: /v1/api-docs

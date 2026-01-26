@@ -2,12 +2,12 @@ package com.vr.test.runner.slave.controller;
 
 import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.page.Page;
-import com.vr.test.runner.slave.request.TestPlan;
-import com.vr.test.runner.slave.request.enums.Browser;
+import com.vr.test.runner.slave.browser.request.BrowserType;
+import com.vr.test.runner.slave.request.TestCase;
+import com.vr.test.runner.slave.scheduler.TestScheduler;
 import com.vr.test.runner.slave.service.test.TestService;
 import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -17,17 +17,22 @@ import java.io.FileOutputStream;
 @RequestMapping("api/v1")
 public class TestController {
 
-    @Autowired
-    private TestServiceFactory testServiceFactory;
+    private final TestServiceFactory testServiceFactory;
+    private final TestScheduler testScheduler;
+
+    public TestController(TestServiceFactory testServiceFactory, TestScheduler testScheduler) {
+        this.testServiceFactory = testServiceFactory;
+        this.testScheduler = testScheduler;
+    }
 
     @PostMapping("run")
-    public Mono<?> runTest(@RequestBody @Valid TestPlan testPlan) {
-        return Mono.just("Test started");
+    public Mono<?> runTest(@RequestBody @Valid TestCase testCase) {
+        return testScheduler.scheduleTest(testCase);
     }
 
     @GetMapping("test-run")
     public Mono<?> runTest() {
-        TestService testService = testServiceFactory.getTestService(Browser.CHROME);
+        TestService testService = testServiceFactory.getTestService(BrowserType.CHROME);
         return testService.launch().doOnSuccess(page -> {
             try {
                 page.cast(

@@ -1,6 +1,7 @@
 package com.vr.test.runner.slave.service.test.impl;
 
 import com.vr.actions.v1.page.Page;
+import com.vr.test.runner.slave.response.SessionDeleteResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 import reactor.core.publisher.Mono;
@@ -15,7 +16,7 @@ public class EdgeTestService extends ChromiumTestService {
     }
 
     @Override
-    public void close(String id) {
+    public Mono<SessionDeleteResponse> close(String id) {
         throw new RuntimeException("Edge is not supported currently");
     }
 }

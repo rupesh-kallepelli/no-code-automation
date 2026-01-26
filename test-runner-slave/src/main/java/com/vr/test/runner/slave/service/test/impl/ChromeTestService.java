@@ -7,6 +7,7 @@ import com.vr.test.runner.slave.browser.request.BrowserType;
 import com.vr.test.runner.slave.browser.response.BrowserSessionResponse;
 import com.vr.test.runner.slave.exceptions.ClientSideException;
 import com.vr.test.runner.slave.exceptions.ServerSideException;
+import com.vr.test.runner.slave.response.SessionDeleteResponse;
 import com.vr.test.runner.slave.util.ScreencastBroadcaster;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -61,8 +62,8 @@ public class ChromeTestService extends ChromiumTestService {
     }
 
     @Override
-    public void close(String id) {
-        browserClient.delete()
+    public Mono<SessionDeleteResponse> close(String id) {
+        return browserClient.delete()
                 .uri("/sessions/" + id)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
@@ -71,10 +72,9 @@ public class ChromeTestService extends ChromiumTestService {
                 .onStatus(HttpStatusCode::is5xxServerError,
                         clientResponse -> Mono.error(() -> new ServerSideException("Server side error while closing session : " + clientResponse))
                 )
-                .bodyToMono(Void.class)
+                .bodyToMono(SessionDeleteResponse.class)
                 .doOnSuccess(v -> log.info("Closed connection : {}", id))
                 .doOnError(throwable -> log.error("Error while closing connection : {}", id));
     }
-
 
 }

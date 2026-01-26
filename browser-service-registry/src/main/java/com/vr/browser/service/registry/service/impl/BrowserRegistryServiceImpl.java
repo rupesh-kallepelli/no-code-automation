@@ -76,6 +76,12 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
         //updating the heartbeat to redis
         redisTemplate.opsForValue().set(heartBeatTrackerId, System.currentTimeMillis() + ":" + heartBeatRequest.activeSessionCount());
 
+        //registering the service again if the service is evicted but still active
+        if (!Objects.requireNonNull(redisTemplate.opsForSet().members(BROWSER_SERVICE_IDS))
+                .contains(heartBeatRequest.id())) {
+            register(heartBeatRequest.registerRequest());
+        }
+
         return new HeartBeatResponse();
     }
 
@@ -162,7 +168,7 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                 scheme,
                 sessionUrl.getUserInfo(),
                 registryHost,
-                registryHost.equals(LOCALHOST) ? port : -1,
+                port,
                 sessionUrl.getPath(),
                 sessionUrl.getQuery(),
                 sessionUrl.getFragment()

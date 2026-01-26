@@ -55,14 +55,19 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
 
     @Override
     public RegistryResponse register(RegisterRequest registerRequest) {
+        String registrationId = BROWSER_SERVICE + UUID.randomUUID();
+        //caching registration requests to redis
+        register(registerRequest, registrationId);
+        log.debug("Registered service with id : {}", registerRequest);
+        return new RegistryResponse(registrationId, "CONNECTED", "200");
+
+    }
+
+    private void register(RegisterRequest registerRequest, String registrationId) {
         try {
-            String registrationId = BROWSER_SERVICE + UUID.randomUUID();
-            //caching registration requests to redis
             redisTemplate.opsForValue().set(registrationId, objectMapper.writeValueAsString(registerRequest));
             //registering the registration id to redis
             redisTemplate.opsForSet().add(BROWSER_SERVICE_IDS, registrationId);
-
-            return new RegistryResponse(registrationId, "CONNECTED", "200");
         } catch (Exception e) {
             log.error("Exception while registering the request", e);
             throw new RegistrationException("Exception while registering the request", e);
@@ -79,7 +84,7 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
         //registering the service again if the service is evicted but still active
         if (!Objects.requireNonNull(redisTemplate.opsForSet().members(BROWSER_SERVICE_IDS))
                 .contains(heartBeatRequest.id())) {
-            register(heartBeatRequest.registerRequest());
+            register(heartBeatRequest.registerRequest(), heartBeatRequest.id());
         }
 
         return new HeartBeatResponse();

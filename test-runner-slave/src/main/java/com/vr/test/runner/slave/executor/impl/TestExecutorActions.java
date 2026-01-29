@@ -1,7 +1,7 @@
 package com.vr.test.runner.slave.executor.impl;
 
-import com.vr.actions.v1.element.Element;
-import com.vr.actions.v1.page.Page;
+import com.vr.cdp.actions.v1.element.Element;
+import com.vr.cdp.actions.v1.page.Page;
 import com.vr.test.runner.slave.response.StepStatus;
 import com.vr.test.runner.slave.response.TestStepResult;
 

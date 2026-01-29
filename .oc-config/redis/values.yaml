@@ -1,0 +1,32 @@
+namespace: kallepallirupesh-dev
+
+ocProject: rm2.thpm.p1
+
+redis:
+  image: redis:7
+  port: 6379
+  password: StrongPassword123!
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redisUI:
+  image: redis/redisinsight:2.54
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ingress:
+  enabled: true
+  className: nginx
+
+route:
+  enabled: true

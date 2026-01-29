@@ -1,11 +1,12 @@
 package com.vr.test.runner.slave.controller;
 
-import com.vr.actions.v1.element.Element;
-import com.vr.actions.v1.page.Page;
-import com.vr.test.runner.slave.browser.request.BrowserType;
+import com.vr.cdp.actions.v1.element.Element;
+import com.vr.cdp.actions.v1.element.selector.Selector;
+import com.vr.cdp.actions.v1.page.Page;
+import com.vr.test.runner.slave.request.enums.BrowserType;
 import com.vr.test.runner.slave.request.TestCase;
 import com.vr.test.runner.slave.scheduler.TestScheduler;
-import com.vr.test.runner.slave.service.test.TestService;
+import com.vr.test.runner.slave.service.test.PageService;
 import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class TestController {
 
     @GetMapping("test-run")
     public Mono<?> runTest() {
-        TestService testService = testServiceFactory.getTestService(BrowserType.CHROME);
+        PageService testService = testServiceFactory.getTestService(BrowserType.CHROME);
         return testService.launch().doOnSuccess(page -> {
             try {
                 page.cast(
@@ -42,11 +43,14 @@ public class TestController {
                         1080
                 );
                 page.navigate("https://opensource-demo.orangehrmlive.com/");
-                page.type("input[name='username']", "Admin");
+                Element username = page.findElement(Selector.selectByCssSelector("input[name='username']"));
+                username.type("Admin");
                 screenshot(page);
-                page.type("input[name='password']", "admin123");
+                Element password = page.findElement(Selector.selectByCssSelector("input[name='password']"));
+                password.type("admin123");
                 screenshot(page);
-                page.click("button[type='submit']");
+                Element button = page.findElement(Selector.selectByCssSelector("button[type='submit']"));
+                button.click();
                 Thread.sleep(5000);
                 screenshot(page);
                 testService.close(page.getId());

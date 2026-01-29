@@ -28,36 +28,31 @@ public class BrowserWebsocketHandler implements WebSocketHandler {
         URI requestUri = session.getHandshakeInfo().getUri();
         String query = requestUri.getQuery();
 
-        URI browserSession =
-                browserRegistry.getURIOf(query.substring(query.indexOf("=") + 1));
+        URI browserSession = browserRegistry.getURIOf(query.substring(query.indexOf("=") + 1));
 
-        Sinks.Many<WebSocketMessage> outboundSink =
-                Sinks.many().unicast().onBackpressureBuffer();
+        Sinks.Many<WebSocketMessage> outboundSink = Sinks.many().unicast().onBackpressureBuffer();
 
-        PlainBackendWebSocketClient backendClient =
-                new PlainBackendWebSocketClient(
-                        browserSession,
-                        text -> outboundSink.tryEmitNext(session.textMessage(text)),
-                        binary -> outboundSink.tryEmitNext(
-                                session.binaryMessage(b -> b.wrap(binary))
-                        ),
-                        outboundSink::tryEmitComplete
-                );
+        PlainBackendWebSocketClient backendClient = new PlainBackendWebSocketClient(
+                browserSession,
+                text -> outboundSink.tryEmitNext(session.textMessage(text)),
+                binary -> outboundSink.tryEmitNext(
+                        session.binaryMessage(b -> b.wrap(binary))
+                ),
+                outboundSink::tryEmitComplete
+        );
 
-        Mono<Void> frontendToBackend =
-                session.receive()
-                        .doOnNext(msg -> {
-                            if (msg.getType() == WebSocketMessage.Type.TEXT) {
-                                backendClient.sendText(msg.getPayloadAsText());
-                            } else if (msg.getType() == WebSocketMessage.Type.BINARY) {
-                                backendClient.sendBinary(msg.getPayload().asByteBuffer());
-                            }
-                        })
-                        .doFinally(sig -> backendClient.close())
-                        .then();
+        Mono<Void> frontendToBackend = session.receive()
+                .doOnNext(msg -> {
+                    if (msg.getType() == WebSocketMessage.Type.TEXT) {
+                        backendClient.sendText(msg.getPayloadAsText());
+                    } else if (msg.getType() == WebSocketMessage.Type.BINARY) {
+                        backendClient.sendBinary(msg.getPayload().asByteBuffer());
+                    }
+                })
+                .doFinally(sig -> backendClient.close())
+                .then();
 
-        Mono<Void> backendToFrontend =
-                session.send(outboundSink.asFlux());
+        Mono<Void> backendToFrontend = session.send(outboundSink.asFlux());
 
         return Mono.when(frontendToBackend, backendToFrontend);
     }

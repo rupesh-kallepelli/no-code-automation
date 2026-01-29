@@ -6,11 +6,13 @@ import com.vr.actions.v1.element.attributes.exception.UnableToGetAttributesExcep
 import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.protocol.command.dom.DOMGetAttributes;
 import com.vr.cdp.protocol.command.dom.DOMResolveNode;
+import com.vr.cdp.protocol.command.runtime.RuntimeCallFunctionOn;
 import com.vr.cdp.protocol.command.runtime.RuntimeGetProperties;
 
 import java.util.List;
 
 public interface ElementAttributes {
+
     default List<String> getAttributes(Element.Node node, CDPClient client) {
         try {
             DOMGetAttributes.Result result = client.sendAndWait(new DOMGetAttributes(node.getNodeId()));
@@ -28,5 +30,27 @@ public interface ElementAttributes {
             throw new UnableToGetAttributesException("Unable to get the properties", e);
         }
     }
+
+    default String getInnerText(Element.Node node, CDPClient client) {
+        try {
+            DOMResolveNode.Result r = client.sendAndWait(
+                    new DOMResolveNode(node.getNodeId(), false)
+            );
+
+            RuntimeCallFunctionOn.Result result = client.sendAndWait(
+                    new RuntimeCallFunctionOn("function() { return this.innerText; }",
+                            r.object().objectId(),
+                            List.of()
+                    )
+            );
+
+            return result.result().value().toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
 
 }

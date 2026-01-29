@@ -94,7 +94,10 @@ public class TestCaseRegistry {
 
     public TestCase getTestCase(String testCaseId) {
         try {
-            TestCaseStatusWrapper testCaseStatusWrapper = objectMapper.readValue(redisTemplate.opsForValue().get(testCaseId), TestCaseStatusWrapper.class);
+            TestCaseStatusWrapper testCaseStatusWrapper = objectMapper.readValue(
+                    redisTemplate.opsForValue().get("test-case:" + testCaseId),
+                    TestCaseStatusWrapper.class
+            );
             return testCaseStatusWrapper.getTestCase();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

@@ -1,6 +1,6 @@
 package com.vr.test.runner.slave.service.test.impl;
 
-import com.vr.actions.v1.page.Page;
+import com.vr.cdp.actions.v1.page.Page;
 import com.vr.test.runner.slave.response.SessionDeleteResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 @RequestScope
-public class EdgeTestService extends ChromiumTestService {
+public class EdgeTestService extends ChromiumPageService {
 
     @Override
     public Mono<Page> launch() {

@@ -1,7 +1,6 @@
 package com.vr.test.runner.slave.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.vr.actions.v1.element.selector.Selector;
 import com.vr.test.runner.slave.request.enums.ActionType;
 import jakarta.validation.constraints.NotNull;
 

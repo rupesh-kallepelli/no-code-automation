@@ -8,7 +8,7 @@ spring:
       host: localhost
       port: 6379
       password: StrongPassword123!
-#browser:
-#  service: http://localhost:8081/api/v1
 browser:
-  service: https://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/api/v1
+  service: http://localhost:8081/api/v1
+#browser:
+#  service: https://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/api/v1

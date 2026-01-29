@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      securityContext:
+        runAsNonRoot: true
+
+      volumes:
+        - name: redis-storage
+          emptyDir: {}
+
+      containers:
+        - name: redis
+          image: {{ .Values.redis.image }}
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: redis
+              containerPort: {{ .Values.redis.port }}
+              protocol: TCP
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
+
+          args:
+            - "--appendonly"
+            - "yes"
+            - "--dir"
+            - "/data"
+            - "--requirepass"
+            - "$(REDIS_PASSWORD)"
+
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  redis-cli -a "$REDIS_PASSWORD" -h 127.0.0.1 -p {{ .Values.redis.port }} PING | grep -q PONG
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            periodSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  redis-cli -a "$REDIS_PASSWORD" -h 127.0.0.1 -p {{ .Values.redis.port }} PING | grep -q PONG
+            initialDelaySeconds: 15
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
+
+          resources:
+{{ toYaml .Values.redis.resources | indent 12 }}

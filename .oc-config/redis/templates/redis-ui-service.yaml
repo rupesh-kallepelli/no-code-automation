@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ui
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: redis-ui
+  ports:
+    - port: 5540
+      targetPort: 5540

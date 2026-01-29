@@ -1,8 +1,8 @@
 package com.vr.ai.automation.executor;
 
-import com.vr.actions.v1.page.Page;
 import com.vr.ai.automation.entity.Step;
 import com.vr.ai.automation.entity.TestPlan;
+import com.vr.cdp.actions.v1.page.Page;
 
 import java.io.FileOutputStream;
 
@@ -24,11 +24,11 @@ public class TestExecutor {
                 }
 
                 case TYPE -> {
-                    page.type(step.selector, step.value);
+//                    page.type(step.selector, step.value);
                 }
 
                 case CLICK -> {
-                    page.click(step.selector);
+//                    page.click(step.selector);
                 }
 
 //                case WAIT_FOR_VISIBLE -> web.waitForVisible(step.selector, step.timeoutMs);
@@ -37,7 +37,6 @@ public class TestExecutor {
             }
             screenshot(page);
         }
-        page.disable();
     }
 
     private static void screenshot(Page page) throws Exception {

@@ -164,10 +164,6 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
 
     private URI getNewSocketUrl(URI sessionUrl) throws URISyntaxException {
         String scheme = sessionUrl.getScheme();
-        if ("ws".equalsIgnoreCase(scheme)) {
-            scheme = "wss";
-        }
-
         //mapping the session to registry service url
         return new URI(
                 scheme,
@@ -225,7 +221,8 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
             String heartBeatTrackerKey = HEART_BEAT + BROWSER_SERVICE + registrationId;
 
             String lastHeartBeat = redisTemplate.opsForValue().get(heartBeatTrackerKey);
-            if (lastHeartBeat == null) {//heart beats might not have received, need eviction from the browser-service-ids
+            if (lastHeartBeat == null) {
+                //heart beats might not have received, need eviction from the browser-service-ids
                 redisTemplate.opsForSet().remove(BROWSER_SERVICE_IDS, registrationId);
                 return;
             }

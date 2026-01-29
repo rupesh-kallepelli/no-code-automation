@@ -4,7 +4,7 @@ import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.element.actions.scroll.exception.ScrollException;
 import com.vr.cdp.client.CDPClient;
 
-public interface ScrollIntoView {
+public interface ScrollIntoView extends com.vr.cdp.actions.v1.element.actions.scroll.ScrollIntoView {
     default void scrollIntoView(Element.Node node, CDPClient client) {
         try {
             switch (node.getIdentifiedBy()) {

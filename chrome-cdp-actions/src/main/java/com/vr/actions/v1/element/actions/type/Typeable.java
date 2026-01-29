@@ -6,7 +6,7 @@ import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.protocol.command.input.InputDispatchKeyEvent;
 import com.vr.cdp.protocol.command.input.InputInsertText;
 
-public interface Typeable extends Focusable {
+public interface Typeable extends com.vr.cdp.actions.v1.element.actions.type.Typeable, Focusable {
     default void type(Element.Node node, CDPClient client, CharSequence charSequence) {
         try {
             focus(node, client);

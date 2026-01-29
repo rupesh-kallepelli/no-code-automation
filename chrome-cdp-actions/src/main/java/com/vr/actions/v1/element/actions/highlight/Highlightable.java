@@ -7,7 +7,7 @@ import com.vr.cdp.protocol.command.overlay.OverlayEnable;
 import com.vr.cdp.protocol.command.overlay.OverlayHideHighlight;
 import com.vr.cdp.protocol.command.overlay.OverlayHighlightNode;
 
-public interface Highlightable {
+public interface Highlightable extends com.vr.cdp.actions.v1.element.actions.highlight.Highlightable {
     default void highlight(Element.Node node, CDPClient client) {
         try {
             client.sendAndWait(new OverlayEnable());

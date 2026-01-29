@@ -1,0 +1,15 @@
+{{- if .Values.route.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: redis-ui
+  namespace: {{ .Values.namespace }}
+spec:
+  to:
+    kind: Service
+    name: redis-ui
+  port:
+    targetPort: 5540
+  tls:
+    termination: edge
+  {{- end }}

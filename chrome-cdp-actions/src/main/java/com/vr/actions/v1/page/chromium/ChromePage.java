@@ -3,55 +3,39 @@ package com.vr.actions.v1.page.chromium;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.actions.dom.DOMActions;
-import com.vr.actions.input.InputActions;
 import com.vr.actions.v1.client.PageCDPClient;
 import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.element.finder.ElementResolver;
-import com.vr.actions.v1.element.selector.Selector;
-import com.vr.actions.v1.page.Page;
-import com.vr.actions.v1.page.chromium.exception.BroadCasterCannotBeNull;
-import com.vr.actions.v1.page.chromium.exception.NavigationException;
+import com.vr.actions.v1.page.chromium.exception.*;
+import com.vr.cdp.actions.v1.element.selector.Selector;
+import com.vr.cdp.actions.v1.page.Page;
 import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.client.broadcast.BroadCaster;
 import com.vr.cdp.client.ws.ScreenCastClient;
+import com.vr.cdp.protocol.command.dom.DOMGetDocument;
+import com.vr.cdp.protocol.command.dom.DOMGetOuterHTML;
 import com.vr.cdp.protocol.command.page.*;
-import com.vr.cdp.protocol.command.runtime.ExecutionContextCreatedEvent;
 import com.vr.cdp.protocol.command.runtime.RuntimeEnable;
 
-import java.util.*;
+import java.util.Base64;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class ChromePage implements Page {
+
     private final String id;
     private final CDPClient client;
     private final ElementResolver elementResolver;
-    private PageState pageState = PageState.READY;
-    private final DOMActions dom;
-    private final InputActions input;
-    private final PageWaiter waiter = new PageWaiter();
-    private final Map<Selector, Element> ELEMENT_REGISTRY = new HashMap<>();
-    private volatile boolean frameStopped = false;
-    private volatile boolean networkIdle = false;
-    private volatile boolean interactive = false;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private volatile long lastDomMutationTs = System.currentTimeMillis();
-
-    private static final long DOM_STABLE_MS = 300;
-    private volatile String mainFrameId;
-
-
-    public ChromePage(
-            String id,
-            String pageWs
-    ) throws Exception {
+    public ChromePage(String id, String pageWs) {
         this.id = id;
-        this.client = new PageCDPClient(pageWs, this);
-        this.dom = new DOMActions(client);
-        this.input = new InputActions(client);
-        this.elementResolver = new ElementResolver(client);
-        client.send(new PageEnable());
-        client.send(new RuntimeEnable());
-        client.send(new PageSetLifecycleEventsEnabled(true));
+        try {
+            this.client = new PageCDPClient(pageWs, this);
+            this.elementResolver = new ElementResolver(client);
+        } catch (Exception e) {
+            throw new PageCreationException("Exception while creating page", e);
+        }
     }
 
     public ChromePage(
@@ -59,202 +43,54 @@ public class ChromePage implements Page {
             String pageWs,
             boolean enableBroadCasting,
             BroadCaster broadCaster
-    ) throws Exception {
-        this.id = id;
-        if (enableBroadCasting) {
-            if (Objects.isNull(broadCaster)) throw new BroadCasterCannotBeNull("Broadcaster is null");
-            this.client = new ScreenCastClient(pageWs, broadCaster);
-        } else
-            this.client = new PageCDPClient(pageWs, this);
-        client.send(new PageEnable());
-        this.dom = new DOMActions(client);
-        this.input = new InputActions(client);
-        this.elementResolver = new ElementResolver(client);
+    ) {
+        try {
+            this.id = id;
+            if (enableBroadCasting) {
+                if (Objects.isNull(broadCaster)) throw new BroadCasterCannotBeNull("Broadcaster is null");
+                this.client = new ScreenCastClient(pageWs, broadCaster);
+            } else
+                this.client = new PageCDPClient(pageWs, this);
+            this.elementResolver = new ElementResolver(client);
+        } catch (Exception e) {
+            throw new PageCreationException("Exception while creating page", e);
+        }
     }
+
+    private volatile CompletableFuture<Void> navigationFuture;
+    private String mainFrameId;
 
     @Override
     public void onEvent(String message) {
-        JsonNode json;
         try {
-            json = objectMapper.readTree(message);
+            JsonNode node = objectMapper.readTree(message);
+            String method = node.has("method") ? node.get("method").asText() : "";
+
+            switch (method) {
+                case "Page.frameStartedNavigating" -> {
+                    String frameId = node.get("params").get("frameId").asText();
+                    if (!frameId.equals(mainFrameId)) return;
+                    navigationFuture = new CompletableFuture<>();
+                }
+                case "Page.frameStoppedLoading", "Page.frameNavigated" -> {
+                    String frameId = node.get("params").has("frameId")
+                            ? node.get("params").get("frameId").asText()
+                            : null;
+                    if (frameId != null && frameId.equals(mainFrameId) && navigationFuture != null) {
+                        navigationFuture.complete(null);
+                    }
+                }
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        String method = json.get("method").asText();
+    }
 
-        switch (method) {
-
-            /* -------------------------
-               Navigation starts (MAIN FRAME ONLY)
-            -------------------------- */
-            case "Page.frameStartedNavigating" -> {
-                String frameId = json.get("params").get("frameId").asText();
-
-                if (!frameId.equals(mainFrameId)) return;
-
-                resetReadiness();
-                transitionTo(PageState.BLOCKED);
-            }
-
-            case "Page.frameStartedLoading" -> {
-                String frameId = json.get("params").get("frameId").asText();
-
-                if (!frameId.equals(mainFrameId)) return;
-
-                resetReadiness();
-                transitionTo(PageState.BLOCKED);
-            }
-
-            /* -------------------------
-               New main document
-            -------------------------- */
-            case "Page.frameNavigated" -> {
-                JsonNode frame = json.get("params").get("frame");
-
-                mainFrameId = frame.get("id").asText();
-
-                invalidateElements();
-                resetReadiness();
-                transitionTo(PageState.BLOCKED);
-            }
-
-            /* -------------------------
-               Browser finished loading (OPTIONAL)
-            -------------------------- */
-            case "Page.frameStoppedLoading" -> {
-                String frameId = json.get("params").get("frameId").asText();
-
-                if (!frameId.equals(mainFrameId)) return;
-
-                frameStopped = true;
-                transitionTo(PageState.BROWSER_LOADED);
-                maybeMarkReady();
-            }
-
-            /* -------------------------
-               Lifecycle events (SPA)
-            -------------------------- */
-            case "Page.lifecycleEvent" -> {
-                String frameId = json.get("params").get("frameId").asText();
-                String name = json.get("params").get("name").asText();
-                // Ignore non-main-frame signals
-                if (!frameId.equals(mainFrameId)) return;
-                if ("networkIdle".equals(name)) {
-                    networkIdle = true;
-                    maybeMarkReady();
-                }
-                if ("InteractiveTime".equals(name)) {
-                    interactive = true;
-                    maybeMarkReady();
-                }
-            }
-            /* -------------------------
-               DOM mutations (rendering)
-            -------------------------- */
-            case "DOM.childNodeInserted",
-                 "DOM.childNodeRemoved",
-                 "DOM.attributeModified" -> {
-
-                lastDomMutationTs = System.currentTimeMillis();
-
-                if (getPageState() == PageState.BROWSER_LOADED
-                        || getPageState() == PageState.APP_LOADING) {
-
-                    transitionTo(PageState.APP_LOADING);
-                }
-            }
-            /* -------------------------
-               Frame subtree detach (IGNORE)
-            -------------------------- */
-            case "Page.frameSubtreeWillBeDetached" -> {
-                // Ignore — iframe noise
-            }
-
-            /* -------------------------
-               Frame detached
-            -------------------------- */
-            case "Page.frameDetached" -> {
-                String frameId = json.get("params").get("frameId").asText();
-                String reason = json.get("params").get("reason").asText();
-
-                // ✅ ONLY reset on MAIN FRAME swap
-                if ("swap".equals(reason) && frameId.equals(mainFrameId)) {
-                    resetReadiness();
-                    transitionTo(PageState.BLOCKED);
-                }
-
-                // ✅ ONLY detach if MAIN FRAME is removed
-                if ("remove".equals(reason) && frameId.equals(mainFrameId)) {
-                    transitionTo(PageState.DETACHED);
-                }
-
-                executionContextCreatedEvents.stream().filter(
-                        executionContextCreatedEvent -> frameId.equals(executionContextCreatedEvent
-                                .params().context()
-                                .auxData().frameId()
-                        )
-                ).findFirst().ifPresent(executionContextCreatedEvents::remove);
-
-            }
-            case "Runtime.executionContextCreated" -> {
-                try {
-                    ExecutionContextCreatedEvent executionContextCreatedEvent = objectMapper.readValue(message, ExecutionContextCreatedEvent.class);
-                    executionContextCreatedEvents.add(executionContextCreatedEvent);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+    // wait for navigation to finish
+    public void waitForNavigation() {
+        if (navigationFuture != null) {
+            navigationFuture.join(); // blocks only the caller, not the event thread
         }
-
-    }
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final List<ExecutionContextCreatedEvent> executionContextCreatedEvents = new ArrayList<>();
-
-    private void maybeMarkReady() {
-        boolean browserReady = frameStopped || interactive;
-
-        if (!browserReady) return;
-        if (!networkIdle) return;
-
-        long quietFor = System.currentTimeMillis() - lastDomMutationTs;
-        if (quietFor < DOM_STABLE_MS) return;
-
-        transitionTo(PageState.READY);
-    }
-
-
-    private void resetReadiness() {
-        frameStopped = false;
-        networkIdle = false;
-        interactive = false;
-        lastDomMutationTs = System.currentTimeMillis();
-    }
-
-
-    private void invalidateElements() {
-        ELEMENT_REGISTRY.values().forEach(Element::invalidate);
-        ELEMENT_REGISTRY.clear();
-    }
-
-    private void transitionTo(PageState newState) {
-        if (pageState == newState) return;
-
-        pageState = newState;
-
-        if (newState == PageState.READY || newState == PageState.DETACHED) {
-            waiter.release();
-        }
-    }
-
-    @Override
-    public PageState getPageState() {
-        return this.pageState;
-    }
-
-    @Override
-    public void setPageState(PageState pageState) {
-        this.pageState = pageState;
     }
 
     @Override
@@ -263,53 +99,47 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public void enable() throws Exception {
-        client.send(new PageEnable());
-    }
-
-    @Override
-    public void disable() throws Exception {
-        client.send(new PageDisable());
-    }
-
-    @Override
     public String navigate(String url) {
         try {
-            PageNavigate.Result r = client.sendAndWait(new PageNavigate(url));
-            return r.frameId();
+            client.send(new PageEnable());
+            client.send(new RuntimeEnable());
+            client.send(new PageSetLifecycleEventsEnabled(true));
+            PageNavigate.Result pageNavigationResult = client.sendAndWait(new PageNavigate(url));
+            mainFrameId = pageNavigationResult.frameId();
+            waitForNavigation();
+            return mainFrameId;
         } catch (Exception e) {
             throw new NavigationException("Unable to navigate due to :", e);
         }
     }
 
     @Override
-    public void reload() throws Exception {
-        client.sendAndWait(new PageReload(true));
+    public void reload() {
+        try {
+            client.sendAndWait(new PageReload(true));
+        } catch (Exception e) {
+            throw new ReloadException("Exception while reload", e);
+        }
     }
 
     @Override
-    public byte[] screenshot() throws Exception {
-        PageCaptureScreenshot.Result result = client.sendAndWait(new PageCaptureScreenshot("png"));
-        return Base64.getDecoder().decode(result.data());
+    public byte[] screenshot() {
+        try {
+            PageCaptureScreenshot.Result result = client.sendAndWait(new PageCaptureScreenshot());
+            return Base64.getDecoder().decode(result.data());
+        } catch (Exception e) {
+            throw new ScreenshotException("Exception while taking screenshot", e);
+        }
     }
 
     @Override
-    public byte[] screenshotFullPage() throws Exception {
-        var result = client.sendAndWait(new PageCaptureScreenshot("png"));
-        return Base64.getDecoder().decode(result.data());
-    }
-
-    @Override
-    public void click(String selector) throws Exception {
-        int nodeId = dom.find(selector);
-        input.click(nodeId);
-    }
-
-    @Override
-    public void type(String selector, String text) throws Exception {
-        int nodeId = dom.find(selector);
-        dom.focus(nodeId);
-        input.type(text);
+    public byte[] screenshotFullPage() {
+        try {
+            PageCaptureScreenshot.Result result = client.sendAndWait(new PageCaptureScreenshot(true));
+            return Base64.getDecoder().decode(result.data());
+        } catch (Exception e) {
+            throw new ScreenshotException("Exception while taking screenshot", e);
+        }
     }
 
     @Override
@@ -318,26 +148,43 @@ public class ChromePage implements Page {
             Integer quality,
             Integer maxWidth,
             Integer maxHeight
-    ) throws Exception {
-        client.send(new PageStartScreencast(format, quality, maxWidth, maxHeight));
+    ) {
+        try {
+            client.send(new PageStartScreencast(format, quality, maxWidth, maxHeight));
+        } catch (Exception e) {
+            throw new NavigationException("Unable to cast due to :", e);
+        }
+    }
+
+    @Override
+    public String getPageSource() {
+        try {
+            return client.sendAndWait(new DOMGetOuterHTML(
+                    client.sendAndWait(new DOMGetDocument()).root().nodeId()
+            )).outerHTML();
+        } catch (Exception e) {
+            throw new PageSourceException("Exception while getting page source", e);
+        }
     }
 
     @Override
     public Element findElement(Selector selector) {
-        if (ELEMENT_REGISTRY.containsKey(selector)) {
-            return ELEMENT_REGISTRY.get(selector);
-        }
-        Element element = waiter.waitUntilReadyAndThenExecute(this,
-                () -> elementResolver.resolveElement(selector, executionContextCreatedEvents.stream().toList())
-        );
-        ELEMENT_REGISTRY.put(selector, element);
-        return element;
+        return elementResolver.resolveElementWithTimeout(selector, 5000);
     }
 
     @Override
-    public void close() throws Exception {
-        this.disable();
-        client.close();
+    public Element findElementWithTimeout(Selector selector, long millis) {
+        return elementResolver.resolveElementWithTimeout(selector, millis);
+    }
+
+    @Override
+    public void close() {
+        try {
+            client.send(new PageDisable());
+            client.close();
+        } catch (Exception e) {
+            throw new PageCloseException("Error occurred while closing page", e);
+        }
     }
 
 }

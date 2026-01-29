@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-ui
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-ui
+  template:
+    metadata:
+      labels:
+        app: redis-ui
+    spec:
+      containers:
+        - name: redis-ui
+          image: {{ .Values.redisUI.image }}
+          ports:
+            - containerPort: 5540
+          env:
+            - name: REDISINSIGHT_PORT
+              value: "5540"
+            - name: REDISINSIGHT_HOST
+              value: "0.0.0.0"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources: {{- toYaml .Values.redisUI.resources | nindent 12 }}
+      volumes:
+        - name: data
+          emptyDir: {}

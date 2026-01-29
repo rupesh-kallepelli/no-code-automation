@@ -2,12 +2,12 @@ package com.vr.actions.v1.element.actions.click;
 
 import com.vr.actions.v1.element.Element;
 import com.vr.actions.v1.element.actions.click.exception.ClickInterInterceptedExceptionException;
-import com.vr.actions.v1.element.actions.focus.Focus;
 import com.vr.actions.v1.element.actions.focus.Focusable;
+import com.vr.cdp.actions.v1.element.actions.focus.Focus;
 import com.vr.cdp.client.CDPClient;
 import com.vr.cdp.protocol.command.input.InputDispatchMouseEvent;
 
-public interface Clickable extends Focusable {
+public interface Clickable extends com.vr.cdp.actions.v1.element.actions.click.Clickable, Focusable {
     private void mouseClick(Element.Node node, CDPClient client, String mouseButton) {
         try {
             Focus focus = focus(node, client);

@@ -28,7 +28,7 @@ public class BrowserRegistry {
         if (Objects.nonNull(details)) {
             details.getProcess().destroyForcibly();
             details.getUsrDir().delete();
-            BrowserLauncher.cleanWSUrl(details.getWsUrl());
+            BrowserLauncher.cleanWSUrl(details.getPageWsUrl());
         }
         browser_cache.remove(id);
     }
@@ -38,7 +38,7 @@ public class BrowserRegistry {
             if (Objects.nonNull(details)) {
                 details.getProcess().destroyForcibly();
                 details.getUsrDir().delete();
-                BrowserLauncher.cleanWSUrl(details.getWsUrl());
+                BrowserLauncher.cleanWSUrl(details.getPageWsUrl());
             }
         });
         browser_cache.clear();
@@ -61,7 +61,7 @@ public class BrowserRegistry {
     public URI getURIOf(String sessionId) {
         BrowserDetails browserDetails = browser_cache.get(sessionId);
         if (Objects.isNull(browserDetails)) throw new NoSuchSession("Session is not present with id : " + sessionId);
-        URI wsURI = URI.create(browserDetails.getWsUrl());
+        URI wsURI = URI.create(browserDetails.getPageWsUrl());
         try {
             return new URI(
                     wsURI.getScheme(),

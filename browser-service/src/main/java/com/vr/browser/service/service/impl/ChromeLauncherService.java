@@ -1,11 +1,11 @@
 package com.vr.browser.service.service.impl;
 
-import com.vr.actions.v1.chrome.ChromeLauncher;
 import com.vr.browser.service.registry.BrowserRegistry;
 import com.vr.browser.service.request.BrowserRequest;
 import com.vr.browser.service.request.BrowserType;
 import com.vr.browser.service.response.BrowserSessionResponse;
 import com.vr.browser.service.service.BrowserService;
+import com.vr.chrome.launcher.v1.chrome.ChromeLauncher;
 import com.vr.launcher.v1.BrowserDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +58,7 @@ public class ChromeLauncherService extends BrowserService {
         browserRegistry.addNewBrowserProcess(chromeDetails.getId(), chromeDetails);
 
         String reWrittenUrl = super.replaceHostAndPort(
-                chromeDetails.getWsUrl(),
+                chromeDetails.getPageWsUrl(),
                 this.ipAddress,
                 this.serverPort,
                 chromeDetails.getId()

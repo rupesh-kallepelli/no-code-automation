@@ -1,25 +1,41 @@
 package com.vr.test.runner.slave.executor.impl;
 
-import com.vr.actions.v1.page.Page;
+import com.vr.cdp.actions.v1.page.Page;
 import com.vr.test.runner.slave.request.TestCaseStep;
 import com.vr.test.runner.slave.response.TestStepResult;
 import jakarta.validation.Valid;
 
+import static com.vr.test.runner.slave.adpater.SelectorAdapter.adaptToElementSelector;
+
 public class TestStepExecutor {
 
-    public static TestStepResult execute(Page pag, @Valid TestCaseStep testCaseStep) {
+    public static TestStepResult execute(Page page, @Valid TestCaseStep testCaseStep) {
         return switch (testCaseStep.action()) {
-            case NAVIGATE -> TestExecutorActions.navigate(pag, testCaseStep.value());
+            case NAVIGATE -> {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                TestStepResult testStepResult = TestExecutorActions.navigate(page, testCaseStep.value());
+                page.cast(
+                        "jpeg",
+                        50,
+                        1920,
+                        1080
+                );
+                yield testStepResult;
+            }
             case CLICK -> {
-                TestExecutorActions.highlight(pag.findElement(testCaseStep.selector()));
-                TestStepResult testStepResult = TestExecutorActions.click(pag.findElement(testCaseStep.selector()));
-                TestExecutorActions.hideHighlight(pag.findElement(testCaseStep.selector()));
+                TestExecutorActions.highlight(page.findElement(adaptToElementSelector(testCaseStep)));
+                TestStepResult testStepResult = TestExecutorActions.click(page.findElement(adaptToElementSelector(testCaseStep)));
+                TestExecutorActions.hideHighlight(page.findElement(adaptToElementSelector(testCaseStep)));
                 yield testStepResult;
             }
             case TYPE -> {
-                TestExecutorActions.highlight(pag.findElement(testCaseStep.selector()));
-                TestStepResult testStepResult = TestExecutorActions.type(pag.findElement(testCaseStep.selector()), testCaseStep.value());
-                TestExecutorActions.hideHighlight(pag.findElement(testCaseStep.selector()));
+                TestExecutorActions.highlight(page.findElement(adaptToElementSelector(testCaseStep)));
+                TestStepResult testStepResult = TestExecutorActions.type(page.findElement(adaptToElementSelector(testCaseStep)), testCaseStep.value());
+                TestExecutorActions.hideHighlight(page.findElement(adaptToElementSelector(testCaseStep)));
                 yield testStepResult;
             }
             case WAIT_FOR_VISIBLE -> null;

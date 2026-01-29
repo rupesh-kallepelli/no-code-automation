@@ -5,6 +5,8 @@ registry:
   host: http://localhost:8081/api/v1
 ip:
   address: ${POD_IP:127.0.0.1}
+browser:
+  mode: false
 #logging:
 #  level:
 #    root: debug

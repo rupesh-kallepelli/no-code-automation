@@ -1,13 +1,13 @@
 package com.vr.ai.automation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vr.actions.v1.page.Page;
 import com.vr.ai.automation.entity.ActionType;
 import com.vr.ai.automation.entity.Step;
 import com.vr.ai.automation.entity.TestPlan;
 import com.vr.ai.automation.executor.TestExecutor;
 import com.vr.ai.automation.planner.AIPlanner;
 import com.vr.ai.automation.util.ScreencastBroadcaster;
+import com.vr.cdp.actions.v1.page.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
@@ -42,7 +42,6 @@ public class TestService {
 
     private String executeTest(LauncherService launcherService, TestPlan plan) throws Exception {
         Page page = launcherService.getChromeInstance(true);
-        page.enable();
         page.cast(
                 "jpeg",        // format
                 90,            // quality (for JPEG)

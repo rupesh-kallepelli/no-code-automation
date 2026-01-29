@@ -9,6 +9,7 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +25,7 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
     private final Map<String, Consumer<String>> eventHandlers = new ConcurrentHashMap<>();
 
 
-    public RawCDPClient(String wsUrl) throws Exception {
+    public RawCDPClient(String wsUrl) throws URISyntaxException, InterruptedException {
         super(new URI(wsUrl));
         connectBlocking();
     }
@@ -112,7 +113,6 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
         if (response.error != null) {
             throw new RuntimeException("CDP Error " + response.error.code + ": " + response.error.message);
         }
-
         return response.result;
     }
 

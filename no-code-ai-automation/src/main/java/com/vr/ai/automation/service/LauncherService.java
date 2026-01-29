@@ -1,7 +1,7 @@
 package com.vr.ai.automation.service;
 
-import com.vr.actions.v1.page.Page;
 import com.vr.ai.automation.util.ScreencastBroadcaster;
+import com.vr.cdp.actions.v1.page.Page;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;

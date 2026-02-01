@@ -1,11 +1,11 @@
 package com.vr.test.runner.slave.service.test.impl;
 
 import com.vr.test.runner.slave.request.Selector;
-import com.vr.test.runner.slave.service.test.PageService;
+import com.vr.test.runner.slave.service.test.BrowserService;
 
 import java.net.URL;
 
-public abstract class ChromiumPageService implements PageService {
+public abstract class ChromiumBrowserService implements BrowserService {
 
     @Override
     public void navigate(String url) {

@@ -1,0 +1,18 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: browser-proxy
+  namespace: {{ .Values.namespace }}
+  annotations:
+    haproxy.router.openshift.io/timeout: 1h
+spec:
+  host: proxy-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+  to:
+    kind: Service
+    name: browser-proxy
+    weight: 100
+  port:
+    targetPort: 9223
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

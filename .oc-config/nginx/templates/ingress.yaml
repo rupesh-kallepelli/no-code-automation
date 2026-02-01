@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: browser-proxy
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    nginx.ingress.kubernetes.io/websocket-services: "browser-proxy"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: proxy-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+      http:
+        paths:
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: browser-proxy
+                port:
+                  number: 9223
+  tls:
+    - hosts:
+        - proxy-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+      secretName: browser-proxy-tls

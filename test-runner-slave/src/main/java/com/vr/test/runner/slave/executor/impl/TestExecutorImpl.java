@@ -1,9 +1,10 @@
 package com.vr.test.runner.slave.executor.impl;
 
+import com.vr.cdp.actions.v1.page.Page;
 import com.vr.test.runner.slave.executor.TestExecutor;
 import com.vr.test.runner.slave.request.TestCase;
 import com.vr.test.runner.slave.response.TestStepResult;
-import com.vr.test.runner.slave.service.test.PageService;
+import com.vr.test.runner.slave.service.test.BrowserService;
 import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,14 +23,15 @@ public class TestExecutorImpl implements TestExecutor {
 
     @Override
     public Mono<List<TestStepResult>> execute(TestCase testCase) {
-        PageService testService = testServiceFactory.getTestService(testCase.browser());
-        return testService.launch().map(page -> {
+        BrowserService testService = testServiceFactory.getTestService(testCase.browser());
+        return testService.launch().map(browser -> {
             try {
+                Page page = browser.getPage();
                 List<TestStepResult> stepResultList = testCase.steps().stream()
                         .map(testCaseStep -> TestStepExecutor.execute(page, testCaseStep))
                         .toList();
-                page.close();
-                testService.close(page.getId()).subscribe();
+                browser.close();
+                testService.close(browser.getSessionId()).subscribe();
                 return stepResultList;
             } catch (Exception e) {
                 throw new RuntimeException(e);

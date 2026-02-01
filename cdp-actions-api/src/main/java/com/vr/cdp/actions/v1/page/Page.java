@@ -9,7 +9,7 @@ public interface Page extends AutoCloseable {
     //  Wait for the current navigation to complete (if any).
     void waitForNavigation();
 
-    String getId();
+    String getSessionId();
 
     String navigate(String url);
 
@@ -30,5 +30,5 @@ public interface Page extends AutoCloseable {
 
     Element findElement(Selector selector);
 
-    Element findElementWithTimeout(Selector selector, long millis);
+    Element findElement(Selector selector, long millis);
 }

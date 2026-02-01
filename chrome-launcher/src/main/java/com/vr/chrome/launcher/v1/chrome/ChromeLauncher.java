@@ -66,6 +66,7 @@ public class ChromeLauncher implements BrowserLauncher {
         cmd.add("--password-store=basic");
         cmd.add("--use-mock-keychain");
         cmd.add("--disable-infobars");
+        cmd.add("about:blank");
 
         if (headless) {
             cmd.add("--headless=new");

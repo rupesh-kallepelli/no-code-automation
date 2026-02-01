@@ -1,5 +1,8 @@
 package com.vr.cdp.protocol.command.target;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TargetCreateTarget
         extends TargetCommand<TargetCreateTarget.Result> {
 
@@ -20,6 +23,7 @@ public class TargetCreateTarget
         return Result.class;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Params(
             String url,
             Integer width,
@@ -31,5 +35,6 @@ public class TargetCreateTarget
         }
     }
 
-    public record Result(String targetId) {}
+    public record Result(String targetId) {
+    }
 }

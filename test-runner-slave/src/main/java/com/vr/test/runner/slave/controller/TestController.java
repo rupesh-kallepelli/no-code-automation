@@ -6,7 +6,7 @@ import com.vr.cdp.actions.v1.page.Page;
 import com.vr.test.runner.slave.request.enums.BrowserType;
 import com.vr.test.runner.slave.request.TestCase;
 import com.vr.test.runner.slave.scheduler.TestScheduler;
-import com.vr.test.runner.slave.service.test.PageService;
+import com.vr.test.runner.slave.service.test.BrowserService;
 import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -33,9 +33,10 @@ public class TestController {
 
     @GetMapping("test-run")
     public Mono<?> runTest() {
-        PageService testService = testServiceFactory.getTestService(BrowserType.CHROME);
-        return testService.launch().doOnSuccess(page -> {
+        BrowserService testService = testServiceFactory.getTestService(BrowserType.CHROME);
+        return testService.launch().doOnSuccess(browser -> {
             try {
+                Page page = browser.getPage();
                 page.cast(
                         "jpeg",
                         50,
@@ -53,7 +54,7 @@ public class TestController {
                 button.click();
                 Thread.sleep(5000);
                 screenshot(page);
-                testService.close(page.getId());
+                testService.close(page.getSessionId());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

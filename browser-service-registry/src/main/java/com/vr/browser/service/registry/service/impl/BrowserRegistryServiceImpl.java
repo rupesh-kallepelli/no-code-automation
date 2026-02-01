@@ -119,20 +119,14 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                 .bodyToMono(BrowserSessionResponse.class)
                 .map(browserSessionResponse -> {
                     try {
-                        //fetching websocket url of healthy browser service
-                        URI sessionUrl = new URI(browserSessionResponse.getWsUrl());
 
                         //registering the browser service ws url
-                        redisTemplate.opsForValue().set(BROWSER_SERVICE_WS + browserSessionResponse.getSessionId(), sessionUrl.toString());
-                        //registering the browser session details
+                        redisTemplate.opsForValue().set(BROWSER_SERVICE_WS + browserSessionResponse.getSessionId(), browserSessionResponse.getWsUrl());
+                        //registering the browser session details`
                         redisTemplate.opsForValue().set(BROWSER_SESSION_DETAILS + browserSessionResponse.getSessionId(), objectMapper.writeValueAsString(browserSessionResponse));
 
-                        URI newSocketUrl = getNewSocketUrl(sessionUrl);
-
-                        browserSessionResponse.setWsUrl(newSocketUrl.toString());
-
                         return browserSessionResponse;
-                    } catch (URISyntaxException | JsonProcessingException e) {
+                    } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
                 });

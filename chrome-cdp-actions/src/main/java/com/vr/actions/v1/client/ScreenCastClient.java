@@ -1,12 +1,13 @@
-package com.vr.cdp.client.ws;
+package com.vr.actions.v1.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vr.cdp.actions.v1.page.Page;
 import com.vr.cdp.client.broadcast.BroadCaster;
 import com.vr.cdp.protocol.command.page.PageScreencastFrame;
 import com.vr.cdp.protocol.command.page.PageScreencastFrameAck;
 
-public class ScreenCastClient extends RawCDPClient {
+public class ScreenCastClient extends PageCDPClient {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private final BroadCaster broadCaster;
@@ -14,6 +15,10 @@ public class ScreenCastClient extends RawCDPClient {
     public ScreenCastClient(String wsUrl, BroadCaster broadCaster) throws Exception {
         super(wsUrl);
         this.broadCaster = broadCaster;
+    }
+
+    public void setPage(Page page) {
+        super.setPage(page);
     }
 
     @Override

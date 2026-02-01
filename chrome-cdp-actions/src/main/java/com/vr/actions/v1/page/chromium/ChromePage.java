@@ -9,48 +9,25 @@ import com.vr.actions.v1.element.finder.ElementResolver;
 import com.vr.actions.v1.page.chromium.exception.*;
 import com.vr.cdp.actions.v1.element.selector.Selector;
 import com.vr.cdp.actions.v1.page.Page;
-import com.vr.cdp.client.CDPClient;
-import com.vr.cdp.client.broadcast.BroadCaster;
-import com.vr.cdp.client.ws.ScreenCastClient;
 import com.vr.cdp.protocol.command.dom.DOMGetDocument;
 import com.vr.cdp.protocol.command.dom.DOMGetOuterHTML;
 import com.vr.cdp.protocol.command.page.*;
 import com.vr.cdp.protocol.command.runtime.RuntimeEnable;
 
 import java.util.Base64;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class ChromePage implements Page {
 
-    private final String id;
-    private final CDPClient client;
+    private final String sessionId;
+    private final PageCDPClient client;
     private final ElementResolver elementResolver;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChromePage(String id, String pageWs) {
-        this.id = id;
+    public ChromePage(String sessionId, PageCDPClient pageCDPClient) {
+        this.sessionId = sessionId;
         try {
-            this.client = new PageCDPClient(pageWs, this);
-            this.elementResolver = new ElementResolver(client);
-        } catch (Exception e) {
-            throw new PageCreationException("Exception while creating page", e);
-        }
-    }
-
-    public ChromePage(
-            String id,
-            String pageWs,
-            boolean enableBroadCasting,
-            BroadCaster broadCaster
-    ) {
-        try {
-            this.id = id;
-            if (enableBroadCasting) {
-                if (Objects.isNull(broadCaster)) throw new BroadCasterCannotBeNull("Broadcaster is null");
-                this.client = new ScreenCastClient(pageWs, broadCaster);
-            } else
-                this.client = new PageCDPClient(pageWs, this);
+            this.client = pageCDPClient;
             this.elementResolver = new ElementResolver(client);
         } catch (Exception e) {
             throw new PageCreationException("Exception while creating page", e);
@@ -94,8 +71,8 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getSessionId() {
+        return sessionId;
     }
 
     @Override
@@ -173,7 +150,7 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public Element findElementWithTimeout(Selector selector, long millis) {
+    public Element findElement(Selector selector, long millis) {
         return elementResolver.resolveElementWithTimeout(selector, millis);
     }
 

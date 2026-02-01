@@ -11,9 +11,9 @@ public abstract class BrowserService {
 
     protected String replaceHostAndPort(
             String originalUrl,
-            String newHost,
-            String port,
-            String sessionId
+            String proxyHost,
+            String proxyPort,
+            String newHost
     ) throws URISyntaxException {
 
         if (originalUrl == null || originalUrl.isEmpty()) {
@@ -28,10 +28,10 @@ public abstract class BrowserService {
         URI updatedUri = new URI(
                 originalUri.getScheme(),      // ws / wss / http / https
                 originalUri.getUserInfo(),
-                newHost,
-                Integer.parseInt(port), //change to newPort in local
-                "/ws",
-                "session=" + sessionId,
+                proxyHost,
+                Integer.parseInt(proxyPort),
+                "/ws/",
+                "host=" + newHost + "&port=" + originalUri.getPort() + "&path=" + originalUri.getPath(),
                 originalUri.getFragment()
         );
 

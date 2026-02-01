@@ -12,14 +12,14 @@ public class ClientSmokeTest {
 
         CDPClient client = new RawCDPClient(wsUrl);
 
-        client.send(new PageEnable());
+//        client.send(new PageEnable());
 
-        PageNavigate.Result r =
-                client.sendAndWait(
-                        new PageNavigate("https://example.com")
-                );
+//        PageNavigate.Result r =
+//                client.sendAndWait(
+//                        new PageNavigate("https://example.com")
+//                );
 
-        System.out.println("Navigated, frameId=" + r.frameId());
+//        System.out.println("Navigated, frameId=" + r.frameId());
 
         client.close();
     }

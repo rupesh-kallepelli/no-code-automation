@@ -21,6 +21,8 @@ public class ChromeLauncherService extends BrowserService {
     public static final String LOCAL_HOST = "127.0.0.1";
     private final String userDir;
     private final String ipAddress;
+    private final String proxyHost;
+    private final String proxyPort;
     private final String serverPort;
     private final boolean headless;
     private final BrowserRegistry browserRegistry;
@@ -29,12 +31,16 @@ public class ChromeLauncherService extends BrowserService {
             @Value("${user.dir}") String userDir,
             @Value("${ip.address}") String ipAddress,
             @Value("${server.port}") String serverPort,
+            @Value("${proxy.host}") String proxyHost,
+            @Value("${proxy.port}") String proxyPort,
             @Value("${browser.mode}") boolean headless,
             BrowserRegistry browserRegistry
     ) {
         this.userDir = userDir;
         this.ipAddress = ipAddress;
         this.serverPort = serverPort;
+        this.proxyHost = proxyHost;
+        this.proxyPort = proxyPort;
         this.headless = headless;
         this.browserRegistry = browserRegistry;
     }
@@ -59,9 +65,9 @@ public class ChromeLauncherService extends BrowserService {
 
         String reWrittenUrl = super.replaceHostAndPort(
                 chromeDetails.getPageWsUrl(),
-                this.ipAddress,
-                this.serverPort,
-                chromeDetails.getId()
+                proxyHost,
+                proxyPort,
+                ipAddress
         );
         return new BrowserSessionResponse(
                 chromeDetails.getId(),

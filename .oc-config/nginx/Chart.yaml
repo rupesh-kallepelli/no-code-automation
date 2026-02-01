@@ -1,0 +1,5 @@
+apiVersion: v2
+name: nginx-proxy
+description: Dynamic Nginx WebSocket Proxy for Browser CDP
+version: 0.1.0
+appVersion: "1.28.1"

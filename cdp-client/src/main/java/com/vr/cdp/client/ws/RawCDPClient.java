@@ -1,5 +1,6 @@
 package com.vr.cdp.client.ws;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.cdp.client.CDPClient;
@@ -76,25 +77,22 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
     public void send(CDPCommand<?> command) throws Exception {
         int id = idGen.getAndIncrement();
         command.setId(id);
+        send(createRequestJson(command.getId(), command.getMethod(), command.getParams()));
+    }
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("id", command.getId());
-        params.put("method", command.getMethod());
-        params.put("params", command.getParams());
-        String json = mapper.writeValueAsString(params);
-
-        send(json);
+    public String createRequestJson(int command, String method, Object params) throws JsonProcessingException {
+        Map<String, Object> paramsMap = new HashMap<>();
+        paramsMap.put("id", command);
+        paramsMap.put("method", method);
+        paramsMap.put("params", params);
+        return mapper.writeValueAsString(paramsMap);
     }
 
     @Override
     public <R> R sendAndWait(CDPCommand<R> command) throws Exception {
         int id = idGen.getAndIncrement();
         command.setId(id);
-        Map<String, Object> params = new HashMap<>();
-        params.put("id", command.getId());
-        params.put("method", command.getMethod());
-        params.put("params", command.getParams());
-        String json = mapper.writeValueAsString(params);
+        String json = createRequestJson(command.getId(), command.getMethod(), command.getParams());
 
         System.out.println("==================================Sending command==================================");
         System.out.println(json);
@@ -106,14 +104,12 @@ public class RawCDPClient extends WebSocketClient implements CDPClient {
         }
 
         String responseJson = responses.remove(id);
-        System.out.println("==================================Received response==================================");
-        System.out.println(responseJson);
         CDPResponse<R> response = mapper.readValue(responseJson, mapper.getTypeFactory().constructParametricType(CDPResponse.class, command.getResultType()));
 
-        if (response.error != null) {
-            throw new RuntimeException("CDP Error " + response.error.code + ": " + response.error.message);
+        if (response.getError() != null) {
+            throw new RuntimeException("CDP Error " + response.getError().getCode() + ": " + response.getError().getMessage());
         }
-        return response.result;
+        return response.getResult();
     }
 
     @Override

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-proxy-config
+data:
+  nginx.conf: |
+    error_log /dev/stderr info;
+    pid /tmp/nginx.pid;
+
+    worker_processes 1;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+
+        # ---------------------------------------
+        # WebSocket upgrade handling
+        # ---------------------------------------
+        map $http_upgrade $connection_upgrade {
+            default upgrade;
+            ''      close;
+        }
+
+        server {
+            listen 9223;
+
+            # ---------------------------------------
+            # Health check
+            # ---------------------------------------
+            location = /healthz {
+                return 200 'ok';
+                add_header Content-Type text/plain;
+            }
+
+            # =====================================================
+            # Dynamic CDP proxy
+            #
+            # URL FORMAT:
+            #   /ws/?host=<host>&port=<port>&path=<path>
+            #
+            # Example:
+            #   /ws/?host=127.0.0.1&port=9222&path=devtools/page/<session-id>
+            # =====================================================
+            location /ws/ {
+                # Extract host/port/path from query string
+                set $target_host $arg_host;
+                set $target_port $arg_port;
+                set $target_path $arg_path;
+
+                proxy_pass http://$target_host:$target_port$target_path;
+
+                proxy_http_version 1.1;
+
+                # Required headers for Chrome / CDP
+                proxy_set_header Host $host;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "Upgrade";
+
+                # Forward client IP
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+
+                # Disable buffering for WebSockets
+                proxy_buffering off;
+
+                # Keep WebSocket alive for long-running sessions
+                proxy_read_timeout 3600s;
+                proxy_send_timeout 3600s;
+            }
+        }
+    }

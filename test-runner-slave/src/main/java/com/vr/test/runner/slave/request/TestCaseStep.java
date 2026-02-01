@@ -7,9 +7,10 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TestCaseStep(
         @NotNull(message = "ActionType can't be null") ActionType action,
+        boolean isWaitRequired,
         Long timeoutMs,
-        Selector selector,
+        Selector sourceSelector,
+        Selector targetSelector,
         String value
-
 ) {
 }

@@ -19,7 +19,8 @@ public class TargetGetTargets
         return Result.class;
     }
 
-    public record Result(List<TargetInfo> targetInfos) {}
+    public record Result(List<TargetInfo> targetInfos) {
+    }
 
     public record TargetInfo(
             String targetId,
@@ -27,6 +28,11 @@ public class TargetGetTargets
             String title,
             String url,
             boolean attached,
-            String openerId
-    ) {}
+            String openerId,
+            Boolean canAccessOpener, // new optional field,
+            String browserContextId,
+            String parentFrameId
+    ) {
+    }
+
 }

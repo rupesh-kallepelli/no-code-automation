@@ -1,12 +1,12 @@
 package com.vr.test.runner.slave.service.test.impl;
 
-import com.vr.actions.v1.page.chromium.ChromePage;
-import com.vr.cdp.actions.v1.page.Page;
+import com.vr.actions.v1.chrome.ChromeBrowser;
+import com.vr.cdp.actions.v1.browser.Browser;
+import com.vr.test.runner.slave.exceptions.ClientSideException;
+import com.vr.test.runner.slave.exceptions.ServerSideException;
 import com.vr.test.runner.slave.request.BrowserRequest;
 import com.vr.test.runner.slave.request.enums.BrowserType;
 import com.vr.test.runner.slave.response.BrowserSessionResponse;
-import com.vr.test.runner.slave.exceptions.ClientSideException;
-import com.vr.test.runner.slave.exceptions.ServerSideException;
 import com.vr.test.runner.slave.response.SessionDeleteResponse;
 import com.vr.test.runner.slave.util.ScreencastBroadcaster;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +20,12 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Service
 @Scope("prototype")
-public class ChromePageService extends ChromiumPageService {
+public class ChromeBrowserService extends ChromiumBrowserService {
 
     private final WebClient browserClient;
     private final ScreencastBroadcaster screencastBroadcaster;
 
-    public ChromePageService(
+    public ChromeBrowserService(
             @Qualifier("browserClient") WebClient browserClient,
             ScreencastBroadcaster screencastBroadcaster
     ) {
@@ -34,7 +34,7 @@ public class ChromePageService extends ChromiumPageService {
     }
 
     @Override
-    public Mono<Page> launch() {
+    public Mono<Browser> launch() {
         return browserClient.post().uri("/sessions")
                 .bodyValue(new BrowserRequest(BrowserType.CHROME))
                 .retrieve()
@@ -49,7 +49,7 @@ public class ChromePageService extends ChromiumPageService {
                     assert browserSessionResponse != null;
                     String websocketUrl = browserSessionResponse.wsUrl();
                     try {
-                        return new ChromePage(
+                        return new ChromeBrowser(
                                 browserSessionResponse.sessionId(),
                                 websocketUrl,
                                 true,

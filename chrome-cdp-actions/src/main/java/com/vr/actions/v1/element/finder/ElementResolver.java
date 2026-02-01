@@ -31,7 +31,6 @@ public class ElementResolver {
         };
     }
 
-
     public Element resolveElement(Selector selector) {
         return resolve(selector);
     }
@@ -41,7 +40,7 @@ public class ElementResolver {
         Element e = null;
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
-                e = resolveElement(selector); // existing logic
+                e = resolveElement(selector);
                 if (e != null) break;
                 Thread.sleep(100);
             } catch (ElementNotFoundException ignored) {

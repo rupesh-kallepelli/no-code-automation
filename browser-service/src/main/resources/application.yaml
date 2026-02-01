@@ -39,7 +39,8 @@ registry:
   host: http://browser-service-registry/api/v1
 ip:
   address: ${POD_IP:127.0.0.1}
-
+proxy:
+  host: browser-proxy:9223
 #logging:
 #  level:
 #    root: debug

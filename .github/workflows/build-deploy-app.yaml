@@ -141,3 +141,8 @@ jobs:
             ./${{ github.event.inputs.service }}/.deploy/ \
             --set namespace=${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set ocProject=${{ secrets.OPENSHIFT_CLUSTER }}
+
+      - name: Restart ${{ github.event.inputs.service }}
+        run: |
+          oc rollout restart deployment/${{ github.event.inputs.service }}
+          oc rollout status deployment/${{ github.event.inputs.service }}

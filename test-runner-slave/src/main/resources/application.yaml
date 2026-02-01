@@ -39,4 +39,4 @@ management:
     readinessstate:
       enabled: true
 browser:
-  service: http://browser-registry-service/api/v1
+  service: http://browser-service-registry/api/v1

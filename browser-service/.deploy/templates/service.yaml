@@ -11,5 +11,9 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
       name: http
+    - port: {{ .Values.proxy.port }}
+      targetPort: {{ .Values.proxy.targetPort }}
+      protocol: TCP
+      name: proxy
   selector:
     {{- include "browser-service.selectorLabels" . | nindent 4 }}

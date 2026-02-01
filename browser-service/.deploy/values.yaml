@@ -41,6 +41,11 @@ service:
   port: 80
   targetPort: 8080
 
+proxy:
+  type: ClusterIP
+  port: 9223
+  targetPort: 9223
+
 ingress:
   enabled: true
   className: "nginx"
@@ -97,7 +102,12 @@ volumes:
       sizeLimit: 1Gi
   - name: chrome-data
     emptyDir: { }
-
+  - name: browser-service-nginx-conf
+    configMap:
+      name: browser-service-nginx-conf
+      items:
+        - key: nginx.conf
+          path: nginx.conf
 volumeMounts:
   - name: dshm
     mountPath: /dev/shm

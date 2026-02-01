@@ -64,10 +64,11 @@ public class ChromeLauncherService extends BrowserService {
         browserRegistry.addNewBrowserProcess(chromeDetails.getId(), chromeDetails);
 
         String reWrittenUrl = super.replaceHostAndPort(
-                chromeDetails.getPageWsUrl(),
+                chromeDetails.getBrowserWsUrl(),
                 proxyHost,
                 proxyPort,
-                ipAddress
+                ipAddress,
+                proxyPort
         );
         return new BrowserSessionResponse(
                 chromeDetails.getId(),

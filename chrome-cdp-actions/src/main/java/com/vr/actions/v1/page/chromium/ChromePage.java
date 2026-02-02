@@ -100,20 +100,20 @@ public class ChromePage implements Page {
     }
 
     @Override
-    public byte[] screenshot() {
+    public String screenshot() {
         try {
             PageCaptureScreenshot.Result result = client.sendAndWait(new PageCaptureScreenshot());
-            return Base64.getDecoder().decode(result.data());
+            return result.data();
         } catch (Exception e) {
             throw new ScreenshotException("Exception while taking screenshot", e);
         }
     }
 
     @Override
-    public byte[] screenshotFullPage() {
+    public String screenshotFullPage() {
         try {
             PageCaptureScreenshot.Result result = client.sendAndWait(new PageCaptureScreenshot(true));
-            return Base64.getDecoder().decode(result.data());
+            return result.data();
         } catch (Exception e) {
             throw new ScreenshotException("Exception while taking screenshot", e);
         }

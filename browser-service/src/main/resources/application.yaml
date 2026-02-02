@@ -42,6 +42,9 @@ ip:
 proxy:
   host: browser-proxy
   port: 9222
+sidecar:
+  proxy:
+    port: 9222
 #logging:
 #  level:
 #    root: debug

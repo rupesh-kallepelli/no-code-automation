@@ -9,7 +9,10 @@ browser:
   mode: false
 proxy:
   host: localhost
-  port: 9223
+  port: 9224
+sidecar:
+  proxy:
+    port: 9223
 #logging:
 #  level:
 #    root: debug

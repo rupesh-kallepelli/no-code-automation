@@ -2,6 +2,7 @@ package com.vr.test.runner.slave.service.test.impl;
 
 import com.vr.actions.v1.chrome.ChromeBrowser;
 import com.vr.cdp.actions.v1.browser.Browser;
+import com.vr.test.runner.slave.exceptions.BrowserConnectionException;
 import com.vr.test.runner.slave.exceptions.ClientSideException;
 import com.vr.test.runner.slave.exceptions.ServerSideException;
 import com.vr.test.runner.slave.request.BrowserRequest;
@@ -56,7 +57,7 @@ public class ChromeBrowserService extends ChromiumBrowserService {
                                 screencastBroadcaster
                         );
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        throw new BrowserConnectionException("Exception while connecting to browser service", e);
                     }
                 });
     }

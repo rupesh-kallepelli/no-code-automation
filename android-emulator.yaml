@@ -1,0 +1,167 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: android-emulator-build
+spec:
+  runPolicy: Serial
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM ubuntu:22.04
+
+      ENV DEBIAN_FRONTEND=noninteractive
+      ENV ANDROID_SDK_ROOT=/opt/android-sdk
+
+      # -----------------------------
+      # OS dependencies
+      # -----------------------------
+      RUN apt-get update && apt-get install -y \
+          openjdk-11-jdk \
+          wget \
+          unzip \
+          curl \
+          libgl1-mesa-dev \
+          libpulse0 \
+          libglu1-mesa \
+          && rm -rf /var/lib/apt/lists/*
+
+      # -----------------------------
+      # Android command-line tools
+      # -----------------------------
+      RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/tools.zip && \
+          unzip /tmp/tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools && \
+          mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
+          rm /tmp/tools.zip
+
+      ENV PATH=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${ANDROID_SDK_ROOT}/emulator:${PATH}
+
+      # -----------------------------
+      # Accept licenses
+      # -----------------------------
+      RUN yes | sdkmanager --licenses
+
+      # -----------------------------
+      # Install emulator + system image
+      # -----------------------------
+      RUN sdkmanager \
+          "platform-tools" \
+          "platforms;android-31" \
+          "system-images;android-31;google_apis;x86_64" \
+          "emulator"
+
+      # -----------------------------
+      # Create AVD at BUILD TIME
+      # -----------------------------
+      RUN echo no | avdmanager create avd \
+          -n test_avd \
+          -k "system-images;android-31;google_apis;x86_64" \
+          -d pixel \
+          --force
+
+      # -----------------------------
+      # Inline startup script
+      # -----------------------------
+      RUN echo '#!/bin/bash\n\
+      set -e\n\
+      \n\
+      export ANDROID_SDK_ROOT=/opt/android-sdk\n\
+      export ANDROID_AVD_HOME=/opt/android-sdk/.android/avd\n\
+      export ANDROID_SDK_HOME=/data/android\n\
+      export HOME=/data/android\n\
+      \n\
+      export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin\n\
+      \n\
+      mkdir -p $ANDROID_SDK_HOME/.android\n\
+      \n\
+      echo \"Starting ADB...\"\n\
+      adb start-server\n\
+      \n\
+      echo \"Starting Emulator...\"\n\
+      exec emulator -avd test_avd \\\n\
+        -no-window \\\n\
+        -no-audio \\\n\
+        -no-boot-anim \\\n\
+        -gpu swiftshader_indirect \\\n\
+        -accel off \\\n\
+        -port 5554\n\
+      ' > /opt/start-emulator.sh && chmod +x /opt/start-emulator.sh
+
+      EXPOSE 5554 5555
+
+      ENTRYPOINT ["/opt/start-emulator.sh"]
+
+  strategy:
+    type: Docker
+
+  output:
+    to:
+      kind: ImageStreamTag
+      name: android-emulator:latest
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: android-avd-config
+data:
+  test_avd.ini: |
+    avd.ini.encoding=UTF-8
+    path=/opt/android-sdk/.android/avd/test_avd.avd
+    path.rel=avd/test_avd.avd
+    target=android-31
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: android-emulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: android-emulator
+  template:
+    metadata:
+      labels:
+        app: android-emulator
+    spec:
+      containers:
+        - name: android-emulator
+          image: image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/android-emulator:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5554
+            - containerPort: 5555
+          env:
+            - name: ANDROID_SDK_ROOT
+              value: /opt/android-sdk
+            - name: ANDROID_AVD_HOME
+              value: /data/avd
+            - name: ANDROID_SDK_HOME
+              value: /data/android
+            - name: HOME
+              value: /data/android
+          command: ["/opt/start-emulator.sh"]
+          volumeMounts:
+            # writable Android home for adb keys
+            - name: android-home
+              mountPath: /data/android
+            # mount the AVD folder
+            - name: android-avd
+              mountPath: /data/avd/test_avd_x86.avd
+              subPath: test_avd_x86.avd
+            # mount the .ini from ConfigMap
+            - name: avd-config
+              mountPath: /data/avd/test_avd.ini
+              subPath: test_avd.ini
+      volumes:
+        - name: android-home
+          emptyDir: {}
+        - name: android-avd
+          persistentVolumeClaim:
+            claimName: android-avd-pvc   # or emptyDir if temporary
+        - name: avd-config
+          configMap:
+            name: android-avd-config
+
+

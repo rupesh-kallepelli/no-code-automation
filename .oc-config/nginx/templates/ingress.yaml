@@ -20,7 +20,7 @@ spec:
               service:
                 name: browser-proxy
                 port:
-                  number: 9223
+                  number: 9222
   tls:
     - hosts:
         - proxy-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com

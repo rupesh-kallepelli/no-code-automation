@@ -21,7 +21,7 @@ data:
         }
 
         server {
-            listen 9223;
+            listen 9222;
 
             # Health check
             location = /healthz {

@@ -7,6 +7,6 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: 9223
+      targetPort: 9222
   selector:
     app: browser-proxy

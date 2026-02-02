@@ -20,8 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -36,21 +34,15 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     private final int thresholdLimit;
-    private final String registryHost;
-    private final int port;
 
     public BrowserRegistryServiceImpl(
             RedisTemplate<String, String> redisTemplate,
             ObjectMapper objectMapper,
-            @Value("${max.session.threshold}") int thresholdLimit,
-            @Value("${registry.host}") String registryHost,
-            @Value("${server.port}") int port
+            @Value("${max.session.threshold}") int thresholdLimit
     ) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         this.thresholdLimit = thresholdLimit;
-        this.registryHost = registryHost;
-        this.port = port;
     }
 
     @Override
@@ -77,7 +69,7 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
     @Override
     public HeartBeatResponse heartBeat(HeartBeatRequest heartBeatRequest) {
 
-        String heartBeatTrackerId = HEART_BEAT + BROWSER_SERVICE + heartBeatRequest.id();
+        String heartBeatTrackerId = HEART_BEAT + heartBeatRequest.id();
         //updating the heartbeat to redis
         redisTemplate.opsForValue().set(heartBeatTrackerId, System.currentTimeMillis() + ":" + heartBeatRequest.activeSessionCount());
 
@@ -127,7 +119,8 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
 
                         return browserSessionResponse;
                     } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                        log.error("Exception while killing the browser", e);
+                        throw new BrowserRequestException("Exception while requesting the browser", e);
                     }
                 });
     }
@@ -152,22 +145,9 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                             clientResponse -> Mono.error(new ServerSideException("Couldn't make request to browser service for killing session %s due to server side exception : ".formatted(sessionId) + clientResponse))
                     ).bodyToMono(SessionDeleteResponse.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error("Exception while killing the browser", e);
+            throw new BrowserSessionKillException("Exception while killing the browser", e);
         }
-    }
-
-    private URI getNewSocketUrl(URI sessionUrl) throws URISyntaxException {
-        String scheme = sessionUrl.getScheme();
-        //mapping the session to registry service url
-        return new URI(
-                scheme,
-                sessionUrl.getUserInfo(),
-                registryHost,
-                port,
-                sessionUrl.getPath(),
-                sessionUrl.getQuery(),
-                sessionUrl.getFragment()
-        );
     }
 
     private RegisterRequest findHealthyService(BrowserRequest browserRequest) {
@@ -181,7 +161,7 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
                 .stream()
                 //filtering on services has active sessions less than a threshold
                 .filter(registrationId -> {
-                    String heartBeatTrackerKey = HEART_BEAT + BROWSER_SERVICE + registrationId;
+                    String heartBeatTrackerKey = HEART_BEAT + registrationId;
                     String lastHeartBeat = redisTemplate.opsForValue().get(heartBeatTrackerKey);
 
                     if (lastHeartBeat == null) return false;
@@ -212,7 +192,7 @@ public class BrowserRegistryServiceImpl implements BrowserRegistryService {
         if (registrationIds == null || registrationIds.isEmpty()) return;
 
         registrationIds.forEach(registrationId -> {
-            String heartBeatTrackerKey = HEART_BEAT + BROWSER_SERVICE + registrationId;
+            String heartBeatTrackerKey = HEART_BEAT + registrationId;
 
             String lastHeartBeat = redisTemplate.opsForValue().get(heartBeatTrackerKey);
             if (lastHeartBeat == null) {

@@ -12,7 +12,7 @@ spec:
     name: browser-proxy
     weight: 100
   port:
-    targetPort: 9223
+    targetPort: 9222
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect

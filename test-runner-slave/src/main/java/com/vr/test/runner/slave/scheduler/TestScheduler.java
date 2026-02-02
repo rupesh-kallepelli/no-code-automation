@@ -1,43 +1,52 @@
 package com.vr.test.runner.slave.scheduler;
 
 import com.vr.test.runner.slave.executor.TestExecutor;
-import com.vr.test.runner.slave.registry.TestCaseRegistry;
 import com.vr.test.runner.slave.request.TestCase;
-import com.vr.test.runner.slave.response.TestScheduleResponse;
+import com.vr.test.runner.slave.response.TestResult;
+import com.vr.test.runner.slave.service.test.TestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
 public class TestScheduler {
-    private final TestCaseRegistry testCaseRegistry;
+    private final TestService testService;
     private final TestExecutor testExecutor;
 
     public TestScheduler(
-            TestCaseRegistry testCaseRegistry,
+            TestService testService,
             TestExecutor testExecutor
     ) {
-        this.testCaseRegistry = testCaseRegistry;
+        this.testService = testService;
         this.testExecutor = testExecutor;
-    }
-
-    public Mono<TestScheduleResponse> scheduleTest(TestCase testCase) {
-        String testCaseId = testCaseRegistry.register(testCase);
-        return Mono.just(new TestScheduleResponse(testCaseId));
     }
 
     @Scheduled(fixedDelay = 60000)
     public void executeTestCase() {
-        testCaseRegistry.getNewTestcaseIds().forEach(testCaseId -> {
-
-            testCaseRegistry.setTestCaseToRunning(testCaseId);
-            TestCase testCase = testCaseRegistry.getTestCase(testCaseId);
-
+        testService.getNewTestcaseIds().forEach(testCaseId -> {
+            //ignoring if the test is already running or picked by another replica
+            if (testService.getRunningTestCaseIds().contains(testCaseId)) {
+                log.debug("Test is picked some other slave, moving forward for next test case");
+                return;
+            }
+            //updating the test case status to running
+            testService.setTestCaseToRunning(testCaseId);
+            TestCase testCase = testService.getTestCase(testCaseId);
+            //executing the test case
             testExecutor.execute(testCase)
-                    .doOnSuccess(testStepResults -> log.info("Test step results : {}", testStepResults))
-                    .doOnError(throwable -> log.error("Error while execution ", throwable))
+                    .doOnSuccess(testStepResults -> {
+                        //updating the test case result
+                        testService.updateTestResult(testCaseId, new TestResult(testStepResults));
+                        log.debug("Test step results : {}", testStepResults);
+                        //updating the test case status to pass
+                        testService.setTestCaseToPassed(testCaseId);
+                    })
+                    .doOnError(throwable -> {
+                        log.error("Error while execution ", throwable);
+                        //updating the test case status to fail
+                        testService.setTestCaseToFailed(testCaseId);
+                    })
                     .subscribe();
         });
     }

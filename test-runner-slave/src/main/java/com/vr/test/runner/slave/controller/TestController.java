@@ -1,78 +1,83 @@
 package com.vr.test.runner.slave.controller;
 
-import com.vr.cdp.actions.v1.element.Element;
-import com.vr.cdp.actions.v1.element.selector.Selector;
-import com.vr.cdp.actions.v1.page.Page;
-import com.vr.test.runner.slave.request.enums.BrowserType;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.test.runner.slave.request.TestCase;
-import com.vr.test.runner.slave.scheduler.TestScheduler;
-import com.vr.test.runner.slave.service.test.BrowserService;
-import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
+import com.vr.test.runner.slave.response.TestResult;
+import com.vr.test.runner.slave.service.test.TestService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.FileOutputStream;
+import java.util.Set;
 
+@Slf4j
 @RestController
 @RequestMapping("api/v1")
+@Tag(name = "Test Controller", description = "This is controller is used to schedule/register test, fetch test cases on status")
 public class TestController {
 
-    private final TestServiceFactory testServiceFactory;
-    private final TestScheduler testScheduler;
+    private final TestService testService;
+    private final ObjectMapper objectMapper;
 
-    public TestController(TestServiceFactory testServiceFactory, TestScheduler testScheduler) {
-        this.testServiceFactory = testServiceFactory;
-        this.testScheduler = testScheduler;
+    public TestController(
+            TestService testService,
+            ObjectMapper objectMapper
+    ) {
+        this.testService = testService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping("run")
+    @Operation(description = "Register the test case to run, once registered it will be picked any of the test runner slave and execute")
     public Mono<?> runTest(@RequestBody @Valid TestCase testCase) {
-        return testScheduler.scheduleTest(testCase);
-    }
-
-    @GetMapping("test-run")
-    public Mono<?> runTest() {
-        BrowserService testService = testServiceFactory.getTestService(BrowserType.CHROME);
-        return testService.launch().doOnSuccess(browser -> {
-            try {
-                Page page = browser.getPage();
-                page.cast(
-                        "jpeg",
-                        50,
-                        1920,
-                        1080
-                );
-                page.navigate("https://opensource-demo.orangehrmlive.com/");
-                Element username = page.findElement(Selector.selectByCssSelector("input[name='username']"));
-                username.type("Admin");
-                screenshot(page);
-                Element password = page.findElement(Selector.selectByCssSelector("input[name='password']"));
-                password.type("admin123");
-                screenshot(page);
-                Element button = page.findElement(Selector.selectByCssSelector("button[type='submit']"));
-                button.click();
-                Thread.sleep(5000);
-                screenshot(page);
-                testService.close(page.getSessionId());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }).map(page -> "Test Completed");
-    }
-
-    private static void screenshot(Page page) throws Exception {
-        byte[] bytes = page.screenshot();
-        try (FileOutputStream fos = new FileOutputStream("screenshots/" + System.currentTimeMillis() + ".png")) {
-            fos.write(bytes);
+        try {
+            log.debug("Received test case for execution \n{}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(testCase));
+            return testService.register(testCase);
+        } catch (JsonProcessingException e) {
+            log.error("Error while parsing test case to json");
+            throw new RuntimeException(e);
         }
     }
 
-    private static void screenshot(Element element) throws Exception {
-        byte[] bytes = element.screenshot();
-        try (FileOutputStream fos = new FileOutputStream("screenshots/" + System.currentTimeMillis() + ".png")) {
-            fos.write(bytes);
-        }
+    @GetMapping("new")
+    @Operation(description = "Fetch new test cases, this will change when a test runner picks up the test case to execute")
+    public Flux<Set<String>> getNewTestCaseIds() {
+        return Flux.just(testService.getNewTestcaseIds());
+    }
+
+    @GetMapping("passed")
+    @Operation(description = "Fetch passed test cases")
+    public Mono<Set<String>> getPassedTestCaseIds() {
+        return Mono.just(testService.getPassedTestCaseIds());
+    }
+
+    @GetMapping("failed")
+    @Operation(description = "Fetch failed test cases")
+    public Flux<Set<String>> getFailedTestCaseIds() {
+        return Flux.just(testService.getFailedTestCaseIds());
+    }
+
+    @GetMapping("running")
+    @Operation(description = "Fetch running test cases")
+    public Flux<Set<String>> getRunningTestCaseIds() {
+        return Flux.just(testService.getRunningTestCaseIds());
+    }
+
+    @GetMapping("testcase/{id}")
+    @Operation(description = "Fetch test case on test id")
+    public Mono<TestCase> getTestCase(@PathVariable("id") String testCaseId) {
+        return Mono.just(testService.getTestCase(testCaseId));
+    }
+
+    @GetMapping("result/{id}")
+    @Operation(description = "Fetch test result on test id")
+    public Mono<TestResult> getTestResult(@PathVariable("id") String testCaseId) {
+        return Mono.just(testService.getTestResult(testCaseId));
     }
 
 }

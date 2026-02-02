@@ -2,11 +2,14 @@ package com.vr.test.runner.slave.executor.impl;
 
 import com.vr.cdp.actions.v1.element.Element;
 import com.vr.cdp.actions.v1.page.Page;
+import com.vr.test.runner.slave.exceptions.EventDispatchWithScreenshotException;
 import com.vr.test.runner.slave.request.Selector;
 import com.vr.test.runner.slave.request.TestCaseStep;
 import com.vr.test.runner.slave.response.StepStatus;
 import com.vr.test.runner.slave.response.TestStepResult;
 import jakarta.validation.Valid;
+
+import java.util.concurrent.Callable;
 
 import static com.vr.test.runner.slave.adpater.SelectorAdapter.adaptToElementSelector;
 
@@ -22,7 +25,11 @@ public class TestStepExecutor {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                TestStepResult testStepResult = TestExecutorActions.navigate(page, step.value());
+                TestStepResult testStepResult = dispatchWithScreenshot(
+                        step.name(),
+                        () -> TestExecutorActions.navigate(page, step.value()),
+                        page
+                );
                 page.cast(
                         "jpeg",
                         50,
@@ -34,7 +41,11 @@ public class TestStepExecutor {
             case CLICK -> {
                 Element element = getElement(page, step, false);
                 TestExecutorActions.highlight(element);
-                TestStepResult result = TestExecutorActions.click(element);
+                TestStepResult result = dispatchWithScreenshot(
+                        step.name(),
+                        () -> TestExecutorActions.click(element),
+                        page
+                );
                 TestExecutorActions.hideHighlight(element);
                 yield result;
             }
@@ -42,7 +53,11 @@ public class TestStepExecutor {
             case RIGHT_CLICK -> {
                 Element element = getElement(page, step, false);
                 TestExecutorActions.highlight(element);
-                TestStepResult result = TestExecutorActions.rightClick(element);
+                TestStepResult result = dispatchWithScreenshot(
+                        step.name(),
+                        () -> TestExecutorActions.rightClick(element),
+                        page
+                );
                 TestExecutorActions.hideHighlight(element);
                 yield result;
             }
@@ -50,7 +65,11 @@ public class TestStepExecutor {
             case TYPE -> {
                 Element element = getElement(page, step, false);
                 TestExecutorActions.highlight(element);
-                TestStepResult result = TestExecutorActions.type(element, step.value());
+                TestStepResult result = dispatchWithScreenshot(
+                        step.name(),
+                        () -> TestExecutorActions.type(element, step.value()),
+                        page
+                );
                 TestExecutorActions.hideHighlight(element);
                 yield result;
             }
@@ -58,37 +77,49 @@ public class TestStepExecutor {
             case TYPE_INDIVIDUAL_CHAR -> {
                 Element element = getElement(page, step, false);
                 TestExecutorActions.highlight(element);
-                TestStepResult result = TestExecutorActions.typeIndividualChar(element, step.value());
+                TestStepResult result = dispatchWithScreenshot(
+                        step.name(),
+                        () -> TestExecutorActions.typeIndividualChar(element, step.value()),
+                        page
+                );
                 TestExecutorActions.hideHighlight(element);
                 yield result;
             }
 
             case SCROLL_INTO_VIEW -> {
                 Element element = getElement(page, step, false);
-                yield TestExecutorActions.scrollIntoView(element);
+                yield dispatchWithScreenshot(step.name(), () -> TestExecutorActions.scrollIntoView(element), page);
             }
 
             case HIGHLIGHT -> {
                 Element element = getElement(page, step, false);
                 TestExecutorActions.highlight(element);
-                yield new TestStepResult(StepStatus.PASSED);
+                yield dispatchWithScreenshot(
+                        step.name(),
+                        () -> StepStatus.PASSED,
+                        page
+                );
             }
 
             case HIDE_HIGHLIGHT -> {
                 Element element = getElement(page, step, false);
                 TestExecutorActions.hideHighlight(element);
-                yield new TestStepResult(StepStatus.PASSED);
+                yield dispatchWithScreenshot(
+                        step.name(),
+                        () -> StepStatus.PASSED,
+                        page
+                );
             }
 
             case GET_TEXT -> {
                 Element element = getElement(page, step, false);
-                yield TestExecutorActions.getText(element);
+                yield dispatchWithScreenshot(step.name(), () -> TestExecutorActions.getText(element), page);
             }
 
             case DRAG_AND_DROP -> {
                 Element source = getElement(page, step, false);
                 Element target = getElement(page, step, true);
-                yield TestExecutorActions.dragAndDrop(source, target);
+                yield dispatchWithScreenshot(step.name(), () -> TestExecutorActions.dragAndDrop(source, target), page);
             }
         };
     }
@@ -112,4 +143,11 @@ public class TestStepExecutor {
         return page.findElement(adaptToElementSelector(selector), millis);
     }
 
+    private static TestStepResult dispatchWithScreenshot(String name, Callable<StepStatus> callable, Page page) {
+        try {
+            return new TestStepResult(name, callable.call(), page.screenshot());
+        } catch (Exception e) {
+            throw new EventDispatchWithScreenshotException("Exception while dispatching event and taking screenshot", e);
+        }
+    }
 }

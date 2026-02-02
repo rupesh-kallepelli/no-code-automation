@@ -26,6 +26,7 @@ public class ChromeLauncherService extends BrowserService {
     private final String serverPort;
     private final boolean headless;
     private final BrowserRegistry browserRegistry;
+    private final String sideCarPort;
 
     public ChromeLauncherService(
             @Value("${user.dir}") String userDir,
@@ -33,6 +34,7 @@ public class ChromeLauncherService extends BrowserService {
             @Value("${server.port}") String serverPort,
             @Value("${proxy.host}") String proxyHost,
             @Value("${proxy.port}") String proxyPort,
+            @Value("${sidecar.proxy.port}") String sideCarPort,
             @Value("${browser.mode}") boolean headless,
             BrowserRegistry browserRegistry
     ) {
@@ -41,6 +43,7 @@ public class ChromeLauncherService extends BrowserService {
         this.serverPort = serverPort;
         this.proxyHost = proxyHost;
         this.proxyPort = proxyPort;
+        this.sideCarPort = sideCarPort;
         this.headless = headless;
         this.browserRegistry = browserRegistry;
     }
@@ -68,7 +71,7 @@ public class ChromeLauncherService extends BrowserService {
                 proxyHost,
                 proxyPort,
                 ipAddress,
-                proxyPort
+                sideCarPort
         );
         return new BrowserSessionResponse(
                 chromeDetails.getId(),

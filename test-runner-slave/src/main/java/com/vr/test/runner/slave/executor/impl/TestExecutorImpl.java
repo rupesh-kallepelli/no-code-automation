@@ -1,6 +1,7 @@
 package com.vr.test.runner.slave.executor.impl;
 
 import com.vr.cdp.actions.v1.page.Page;
+import com.vr.test.runner.slave.exceptions.TestExecutionException;
 import com.vr.test.runner.slave.executor.TestExecutor;
 import com.vr.test.runner.slave.request.TestCase;
 import com.vr.test.runner.slave.response.TestStepResult;
@@ -27,6 +28,7 @@ public class TestExecutorImpl implements TestExecutor {
         return testService.launch().map(browser -> {
             try {
                 Page page = browser.getPage();
+                //executing the test cases
                 List<TestStepResult> stepResultList = testCase.steps().stream()
                         .map(testCaseStep -> TestStepExecutor.execute(page, testCaseStep))
                         .toList();
@@ -34,7 +36,7 @@ public class TestExecutorImpl implements TestExecutor {
                 testService.close(browser.getSessionId()).subscribe();
                 return stepResultList;
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new TestExecutionException("Exception while running tests ", e);
             }
         }).doOnSuccess(
                 testStepResults -> testStepResults.forEach(stepResult -> log.info("Executed Steps : {}", stepResult))

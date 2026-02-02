@@ -3,40 +3,40 @@ package com.vr.test.runner.slave.executor.impl;
 import com.vr.cdp.actions.v1.element.Element;
 import com.vr.cdp.actions.v1.page.Page;
 import com.vr.test.runner.slave.response.StepStatus;
-import com.vr.test.runner.slave.response.TestStepResult;
+import com.vr.test.runner.slave.response.StepStatus;
 
 
 public class TestExecutorActions {
 
     /* ---------------- PAGE ACTIONS ---------------- */
 
-    public static TestStepResult navigate(Page page, String url) {
+    public static StepStatus navigate(Page page, String url) {
         return executeEvent(() -> page.navigate(url));
     }
 
     /* ---------------- ELEMENT ACTIONS ---------------- */
 
-    public static TestStepResult click(Element element) {
+    public static StepStatus click(Element element) {
         return executeEvent(element::click);
     }
 
-    public static TestStepResult rightClick(Element element) {
+    public static StepStatus rightClick(Element element) {
         return executeEvent(element::rightClick);
     }
 
-    public static TestStepResult type(Element element, CharSequence charSequence) {
+    public static StepStatus type(Element element, CharSequence charSequence) {
         return executeEvent(() -> element.type(charSequence));
     }
 
-    public static TestStepResult typeIndividualChar(Element element, CharSequence charSequence) {
+    public static StepStatus typeIndividualChar(Element element, CharSequence charSequence) {
         return executeEvent(() -> element.typeIndividualCharacter(charSequence));
     }
 
-    public static TestStepResult scrollIntoView(Element element) {
+    public static StepStatus scrollIntoView(Element element) {
         return executeEvent(element::scrollIntoView);
     }
 
-    public static TestStepResult dragAndDrop(Element source, Element target) {
+    public static StepStatus dragAndDrop(Element source, Element target) {
         return executeEvent(() -> source.dragToElement(target));
     }
 
@@ -52,18 +52,18 @@ public class TestExecutorActions {
 
     /* ---------------- DATA ACTIONS ---------------- */
 
-    public static TestStepResult getText(Element element) {
+    public static StepStatus getText(Element element) {
         return executeEvent(element::getText);
     }
 
     /* ---------------- CORE EXECUTION ---------------- */
 
-    private static TestStepResult executeEvent(Runnable event) {
+    private static StepStatus executeEvent(Runnable event) {
         try {
             event.run();
-            return new TestStepResult(StepStatus.PASSED);
+            return StepStatus.PASSED;
         } catch (Exception e) {
-            return new TestStepResult(StepStatus.FAILED);
+            return StepStatus.FAILED;
         }
     }
 

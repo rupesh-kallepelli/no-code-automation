@@ -19,7 +19,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: [ "nginx", "-g", "daemon off;" ]
           ports:
-            - containerPort: 9223
+            - containerPort: 9222
           volumeMounts:
             - name: conf
               mountPath: /etc/nginx/nginx.conf
@@ -27,13 +27,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 9223
+              port: 9222
             initialDelaySeconds: 2
             periodSeconds: 4
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 9223
+              port: 9222
             initialDelaySeconds: 10
             periodSeconds: 10
       volumes:

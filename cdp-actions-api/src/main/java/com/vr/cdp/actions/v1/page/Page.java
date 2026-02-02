@@ -13,11 +13,11 @@ public interface Page extends AutoCloseable {
 
     String navigate(String url);
 
-    void reload() throws Exception;
+    void reload();
 
-    byte[] screenshot() throws Exception;
+    String screenshot();
 
-    byte[] screenshotFullPage() throws Exception;
+    String screenshotFullPage();
 
     void cast(
             String format,

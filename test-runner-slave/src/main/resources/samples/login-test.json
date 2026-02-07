@@ -1,0 +1,81 @@
+{
+  "testName": "navigation test",
+  "browser": "CHROME",
+  "steps": [
+    {
+      "name": "Navigate to page",
+      "action": "NAVIGATE",
+      "timeoutMs": 1000,
+      "value": "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
+    },
+    {
+      "name": "Wait",
+      "action": "WAIT_TIMEOUT",
+      "timeoutMs": 10000,
+      "isWaitRequired": true
+    },
+    {
+      "name": "Enter Username",
+      "action": "TYPE",
+      "timeoutMs": 5000,
+      "sourceSelector": {
+        "selectorType": "CSS",
+        "selectorValue": "input[name='username']"
+      },
+      "isWaitRequired": true,
+      "value": "Admin"
+    },
+    {
+      "name": "Wait",
+      "action": "WAIT_TIMEOUT",
+      "timeoutMs": 10000,
+      "isWaitRequired": true
+    },
+    {
+      "name": "Enter password",
+      "action": "TYPE",
+      "timeoutMs": 1000,
+      "sourceSelector": {
+        "selectorType": "CSS",
+        "selectorValue": "input[name='password']"
+      },
+      "value": "admin123"
+    },
+    {
+      "name": "Wait",
+      "action": "WAIT_TIMEOUT",
+      "timeoutMs": 10000,
+      "isWaitRequired": true
+    },
+    {
+      "name": "Click button",
+      "action": "CLICK",
+      "timeoutMs": 1000,
+      "sourceSelector": {
+        "selectorType": "XPATH",
+        "selectorValue": "//button"
+      }
+    },
+    {
+      "name": "Wait",
+      "action": "WAIT_TIMEOUT",
+      "timeoutMs": 10000,
+      "isWaitRequired": true
+    },
+    {
+      "name": "Click text",
+      "action": "CLICK",
+      "timeoutMs": 1000,
+      "sourceSelector": {
+        "selectorType": "XPATH",
+        "selectorValue": "//*[text()='Buzz']"
+      }
+    },
+    {
+      "name": "Wait",
+      "action": "WAIT_TIMEOUT",
+      "timeoutMs": 10000,
+      "isWaitRequired": true
+    }
+  ]
+}

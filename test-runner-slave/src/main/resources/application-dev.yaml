@@ -12,6 +12,10 @@ browser:
   service: http://localhost:8081/api/v1
 logging:
   level:
-    root: debug
+    com:
+      vr:
+        test:
+          runner:
+            slave: debug
 #browser:
 #  service: https://browser-service-registry-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com/api/v1

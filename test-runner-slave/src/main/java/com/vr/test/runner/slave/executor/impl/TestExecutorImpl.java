@@ -7,6 +7,7 @@ import com.vr.test.runner.slave.request.TestCase;
 import com.vr.test.runner.slave.response.TestStepResult;
 import com.vr.test.runner.slave.service.test.BrowserService;
 import com.vr.test.runner.slave.service.test.factory.TestServiceFactory;
+import com.vr.test.runner.slave.util.ScreencastBroadcaster;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -17,21 +18,24 @@ import java.util.List;
 @Slf4j
 public class TestExecutorImpl implements TestExecutor {
     private final TestServiceFactory testServiceFactory;
+    private final ScreencastBroadcaster screencastBroadcaster;
 
-    public TestExecutorImpl(TestServiceFactory testServiceFactory) {
+    public TestExecutorImpl(TestServiceFactory testServiceFactory, ScreencastBroadcaster screencastBroadcaster) {
         this.testServiceFactory = testServiceFactory;
+        this.screencastBroadcaster = screencastBroadcaster;
     }
 
     @Override
     public Mono<List<TestStepResult>> execute(TestCase testCase) {
-        BrowserService testService = testServiceFactory.getTestService(testCase.browser());
-        return testService.launch().map(browser -> {
+        BrowserService testService = testServiceFactory.getTestService(testCase.getBrowser());
+        return testService.launch(testCase.getTestCaseId()).map(browser -> {
             try {
                 Page page = browser.getPage();
                 //executing the test cases
-                List<TestStepResult> stepResultList = testCase.steps().stream()
+                List<TestStepResult> stepResultList = testCase.getSteps().stream()
                         .map(testCaseStep -> TestStepExecutor.execute(page, testCaseStep))
                         .toList();
+                screencastBroadcaster.unregister(testCase.getTestCaseId());
                 browser.close();
                 testService.close(browser.getSessionId()).subscribe();
                 return stepResultList;

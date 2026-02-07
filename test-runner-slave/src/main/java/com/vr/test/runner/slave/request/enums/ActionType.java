@@ -10,6 +10,6 @@ public enum ActionType {
     GET_TEXT,
     HIGHLIGHT,
     HIDE_HIGHLIGHT,
-    DRAG_AND_DROP
-
+    DRAG_AND_DROP,
+    WAIT_TIMEOUT
 }

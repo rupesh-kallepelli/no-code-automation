@@ -36,6 +36,7 @@ public class TestCaseRegistry {
 
         try {
             String testCaseId = UUID.randomUUID().toString();
+            testCase.setTestCaseId(testCaseId);
             //registering a test case with id
             redisTemplate.opsForValue().set(TEST_CASE + testCaseId, objectMapper.writeValueAsString(new TestCaseStatusWrapper(testCase, TestCaseStatus.NEW)));
             //registering new test case ids

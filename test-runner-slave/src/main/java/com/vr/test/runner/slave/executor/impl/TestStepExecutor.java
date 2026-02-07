@@ -121,6 +121,9 @@ public class TestStepExecutor {
                 Element target = getElement(page, step, true);
                 yield dispatchWithScreenshot(step.name(), () -> TestExecutorActions.dragAndDrop(source, target), page);
             }
+
+            case WAIT_TIMEOUT ->
+                    dispatchWithScreenshot(step.name(), () -> TestExecutorActions.waitForTimeout(step.timeoutMs()), page);
         };
     }
 

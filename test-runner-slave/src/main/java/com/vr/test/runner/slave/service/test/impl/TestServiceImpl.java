@@ -2,6 +2,7 @@ package com.vr.test.runner.slave.service.test.impl;
 
 import com.vr.test.runner.slave.registry.TestCaseRegistry;
 import com.vr.test.runner.slave.request.TestCase;
+import com.vr.test.runner.slave.request.TestCaseStatusWrapper;
 import com.vr.test.runner.slave.response.TestResult;
 import com.vr.test.runner.slave.response.TestScheduleResponse;
 import com.vr.test.runner.slave.service.test.TestService;

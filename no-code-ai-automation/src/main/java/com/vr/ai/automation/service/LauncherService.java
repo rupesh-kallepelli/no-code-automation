@@ -9,11 +9,11 @@ import java.util.Objects;
 @Slf4j
 public class LauncherService {
     private Page instance;
-    private final ScreencastBroadcaster screencastBroadcaster;
+//    private final ScreencastBroadcaster screencastBroadcaster;
 
-    public LauncherService(ScreencastBroadcaster screencastBroadcaster) {
-        this.screencastBroadcaster = screencastBroadcaster;
-    }
+//    public LauncherService(ScreencastBroadcaster screencastBroadcaster) {
+//        this.screencastBroadcaster = screencastBroadcaster;
+//    }
 
     public Page getChromeInstance(boolean broadCast) throws Exception {
 //        ChromeLauncher.Builder chromeLauncher = ChromeLauncher.builder()

@@ -63,7 +63,7 @@ public class ChromeLauncherService extends BrowserService {
                 .remoteDebuggingPort(port)
                 .build();
 
-        BrowserDetails chromeDetails = chromeLauncher.launch();
+        BrowserDetails chromeDetails = chromeLauncher.launch(browserRequest.testCaseId());
         browserRegistry.addNewBrowserProcess(chromeDetails.getId(), chromeDetails);
 
         String reWrittenUrl = super.replaceHostAndPort(

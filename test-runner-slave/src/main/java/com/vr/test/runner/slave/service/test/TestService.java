@@ -1,6 +1,7 @@
 package com.vr.test.runner.slave.service.test;
 
 import com.vr.test.runner.slave.request.TestCase;
+import com.vr.test.runner.slave.request.TestCaseStatusWrapper;
 import com.vr.test.runner.slave.response.TestResult;
 import com.vr.test.runner.slave.response.TestScheduleResponse;
 import reactor.core.publisher.Mono;

@@ -16,7 +16,6 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 public class ChromeLauncher implements BrowserLauncher {
 
@@ -37,7 +36,7 @@ public class ChromeLauncher implements BrowserLauncher {
         this.remoteDebuggingAddress = b.remoteDebuggingAddress;
     }
 
-    public ChromeDetails launch() throws Exception {
+    public ChromeDetails launch(String sessionId) throws Exception {
 
         List<String> cmd = new ArrayList<>();
         cmd.add(chromeBinary);
@@ -100,7 +99,7 @@ public class ChromeLauncher implements BrowserLauncher {
         return new ChromeDetails(
                 waitForBrowserWs(),
                 waitForFirstPageWs(),
-                UUID.randomUUID().toString(),
+                sessionId,
                 process,
                 userDataDir,
                 remoteDebuggingAddress,

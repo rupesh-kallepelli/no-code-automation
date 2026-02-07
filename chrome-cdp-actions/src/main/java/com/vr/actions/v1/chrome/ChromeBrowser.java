@@ -39,7 +39,7 @@ public class ChromeBrowser implements Browser {
             this.sessionId = sessionId;
             if (enableCasting) {
                 if (Objects.isNull(broadCaster)) throw new BroadCasterCannotBeNull("Broadcaster is null");
-                this.cdpClient = new ScreenCastClient(browserWsUrl, broadCaster);
+                this.cdpClient = new ScreenCastClient(sessionId, browserWsUrl, broadCaster);
             } else
                 this.cdpClient = new PageCDPClient(browserWsUrl);
 

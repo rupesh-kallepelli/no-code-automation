@@ -4,6 +4,7 @@ import com.vr.actions.v1.chrome.ChromeBrowser;
 import com.vr.cdp.actions.v1.browser.Browser;
 import com.vr.test.runner.slave.exceptions.BrowserConnectionException;
 import com.vr.test.runner.slave.exceptions.ClientSideException;
+import com.vr.test.runner.slave.exceptions.NoSuchTestCaseException;
 import com.vr.test.runner.slave.exceptions.ServerSideException;
 import com.vr.test.runner.slave.request.BrowserRequest;
 import com.vr.test.runner.slave.request.enums.BrowserType;
@@ -17,6 +18,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -35,9 +38,11 @@ public class ChromeBrowserService extends ChromiumBrowserService {
     }
 
     @Override
-    public Mono<Browser> launch() {
+    public Mono<Browser> launch(String testCaseId) {
+        if (Objects.isNull(testCaseId))
+            return Mono.error(new NoSuchTestCaseException("Test case id can't be null"));
         return browserClient.post().uri("/sessions")
-                .bodyValue(new BrowserRequest(BrowserType.CHROME))
+                .bodyValue(new BrowserRequest(testCaseId, BrowserType.CHROME))
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
                         clientResponse -> Mono.error(() -> new ClientSideException("Client side error while creating session : " + clientResponse))
@@ -51,7 +56,7 @@ public class ChromeBrowserService extends ChromiumBrowserService {
                     String websocketUrl = browserSessionResponse.wsUrl();
                     try {
                         return new ChromeBrowser(
-                                browserSessionResponse.sessionId(),
+                                testCaseId,
                                 websocketUrl,
                                 true,
                                 screencastBroadcaster

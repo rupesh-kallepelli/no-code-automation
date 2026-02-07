@@ -20,7 +20,7 @@ public class BrowserTest {
                 .userDataDir("tmp/profile/" + UUID.randomUUID())
                 .build();
 
-        BrowserDetails browserDetails = launcher.launch();
+        BrowserDetails browserDetails = launcher.launch("123");
         Browser browser = new ChromeBrowser("123", browserDetails.getBrowserWsUrl());
 
         Page page = browser.getPage();

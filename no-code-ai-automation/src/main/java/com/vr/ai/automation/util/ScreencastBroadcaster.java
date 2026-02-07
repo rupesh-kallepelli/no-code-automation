@@ -21,7 +21,7 @@ public class ScreencastBroadcaster implements BroadCaster {
         sessions.remove(session);
     }
 
-    public void broadcast(CharSequence base64Image) {
+    public void broadcast(String s, CharSequence base64Image) {
         TextMessage message = new TextMessage(base64Image);
         for (WebSocketSession session : sessions) {
             try {

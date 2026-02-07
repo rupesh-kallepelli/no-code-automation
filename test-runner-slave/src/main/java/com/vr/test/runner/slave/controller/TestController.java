@@ -3,6 +3,8 @@ package com.vr.test.runner.slave.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.test.runner.slave.request.TestCase;
+import com.vr.test.runner.slave.request.TestIdResponse;
+import com.vr.test.runner.slave.request.enums.TestCaseStatus;
 import com.vr.test.runner.slave.response.TestResult;
 import com.vr.test.runner.slave.service.test.TestService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,10 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.Set;
 
 @Slf4j
 @RestController
@@ -32,9 +31,9 @@ public class TestController {
         this.objectMapper = objectMapper;
     }
 
-    @PostMapping("run")
+    @PostMapping("register")
     @Operation(description = "Register the test case to run, once registered it will be picked any of the test runner slave and execute")
-    public Mono<?> runTest(@RequestBody @Valid TestCase testCase) {
+    public Mono<?> registerTest(@RequestBody @Valid TestCase testCase) {
         try {
             log.debug("Received test case for execution \n{}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(testCase));
             return testService.register(testCase);
@@ -46,26 +45,26 @@ public class TestController {
 
     @GetMapping("new")
     @Operation(description = "Fetch new test cases, this will change when a test runner picks up the test case to execute")
-    public Flux<Set<String>> getNewTestCaseIds() {
-        return Flux.just(testService.getNewTestcaseIds());
+    public TestIdResponse getNewTestCaseIds() {
+        return new TestIdResponse(TestCaseStatus.NEW, testService.getNewTestcaseIds());
     }
 
     @GetMapping("passed")
     @Operation(description = "Fetch passed test cases")
-    public Mono<Set<String>> getPassedTestCaseIds() {
-        return Mono.just(testService.getPassedTestCaseIds());
+    public TestIdResponse getPassedTestCaseIds() {
+        return new TestIdResponse(TestCaseStatus.PASSED, testService.getPassedTestCaseIds());
     }
 
     @GetMapping("failed")
     @Operation(description = "Fetch failed test cases")
-    public Flux<Set<String>> getFailedTestCaseIds() {
-        return Flux.just(testService.getFailedTestCaseIds());
+    public TestIdResponse getFailedTestCaseIds() {
+        return new TestIdResponse(TestCaseStatus.FAILED, testService.getFailedTestCaseIds());
     }
 
     @GetMapping("running")
     @Operation(description = "Fetch running test cases")
-    public Flux<Set<String>> getRunningTestCaseIds() {
-        return Flux.just(testService.getRunningTestCaseIds());
+    public TestIdResponse getRunningTestCaseIds() {
+        return new TestIdResponse(TestCaseStatus.RUNNING, testService.getRunningTestCaseIds());
     }
 
     @GetMapping("testcase/{id}")

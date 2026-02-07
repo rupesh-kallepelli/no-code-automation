@@ -10,5 +10,5 @@ public interface BrowserLauncher {
         usedWslUrl.remove(wsUrl);
     }
 
-    BrowserDetails launch() throws Exception;
+    BrowserDetails launch(String sessionId) throws Exception;
 }

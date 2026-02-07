@@ -26,7 +26,7 @@ public class TestService {
     }
 
     public String runTest(String testCase) throws Exception {
-        LauncherService launcherService = new LauncherService(screencastBroadcaster);
+        LauncherService launcherService = new LauncherService();
         TestPlan plan = generateTestPlan(testCase);
         System.out.println(plan);
         try {

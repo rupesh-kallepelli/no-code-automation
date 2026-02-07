@@ -2,7 +2,7 @@ package com.vr.test.runner.slave.executor.impl;
 
 import com.vr.cdp.actions.v1.element.Element;
 import com.vr.cdp.actions.v1.page.Page;
-import com.vr.test.runner.slave.response.StepStatus;
+import com.vr.test.runner.slave.exceptions.WaitTimeoutException;
 import com.vr.test.runner.slave.response.StepStatus;
 
 
@@ -38,6 +38,19 @@ public class TestExecutorActions {
 
     public static StepStatus dragAndDrop(Element source, Element target) {
         return executeEvent(() -> source.dragToElement(target));
+    }
+
+    public static StepStatus waitForTimeout(long timeout) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime <= timeout) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new WaitTimeoutException("Thread interrupted due tos unexpected event", e);
+            }
+        }
+        return StepStatus.PASSED;
     }
 
     /* ---------------- VISUAL HELPERS ---------------- */

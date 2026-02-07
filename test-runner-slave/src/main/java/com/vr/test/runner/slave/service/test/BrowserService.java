@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 import java.net.URL;
 
 public interface BrowserService {
-    Mono<Browser> launch();
+    Mono<Browser> launch(String sessionId);
 
     Mono<SessionDeleteResponse> close(String id);
 

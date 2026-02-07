@@ -11,9 +11,11 @@ public class ScreenCastClient extends PageCDPClient {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private final BroadCaster broadCaster;
+    private final String sessionId;
 
-    public ScreenCastClient(String wsUrl, BroadCaster broadCaster) throws Exception {
+    public ScreenCastClient(String sessionId, String wsUrl, BroadCaster broadCaster) throws Exception {
         super(wsUrl);
+        this.sessionId = sessionId;
         this.broadCaster = broadCaster;
     }
 
@@ -29,7 +31,7 @@ public class ScreenCastClient extends PageCDPClient {
             JsonNode root = MAPPER.readTree(message);
             if ("Page.screencastFrame".equals(root.path("method").asText())) {
                 PageScreencastFrame frame = MAPPER.treeToValue(root, PageScreencastFrame.class);
-                broadCaster.broadcast(frame.params().data());
+                broadCaster.broadcast(sessionId, frame.params().data());
                 send(new PageScreencastFrameAck(frame.params().sessionId()));
             }
         } catch (Exception e) {

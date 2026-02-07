@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 public class EdgeTestService extends ChromiumBrowserService {
 
     @Override
-    public Mono<Browser> launch() {
+    public Mono<Browser> launch(String testCaseId) {
         throw new RuntimeException("Edge is not supported currently");
     }
 

@@ -1,0 +1,9 @@
+*/target
+.idea
+*/.idea
+*/node_modules
+.vscode
+*/.vscode
+tmp
+chrome-profiles
+screenshots

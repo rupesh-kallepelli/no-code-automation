@@ -1,0 +1,40 @@
+namespace: kallepallirupesh-dev
+ocProject: rm2.thpm.p1
+
+route:
+  enabled: true
+
+ingress:
+  enabled: false
+  className: nginx
+
+replicaCount: 1
+
+image:
+  repository: ollama/ollama
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 11434
+
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "500m"
+  limits:
+    memory: "3Gi"
+    cpu: "1"
+
+persistence:
+  enabled: true
+  size: 5Gi
+  mountPath: /tmp/.ollama
+
+env:
+  OLLAMA_NUM_PARALLEL: "1"
+  OLLAMA_MAX_LOADED_MODELS: "1"
+  OLLAMA_KEEP_ALIVE: "24h"
+
+model:
+  name: qwen2.5:0.5b

@@ -1,0 +1,26 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ollama
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: ollama-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ollama
+                port:
+                  number: {{ .Values.service.port }}
+  tls:
+    - hosts:
+        - ollama-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+      secretName: ollama-tls
+  {{- end }}

@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+
+      terminationGracePeriodSeconds: 600
+
+      ############################################
+      # INIT CONTAINER — Pull Model FIRST
+      ############################################
+      initContainers:
+        - name: model-pull
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              ollama serve &
+              sleep 5
+              ollama pull {{ .Values.model.name }}
+
+          env:
+            - name: HOME
+              value: /tmp
+            - name: OLLAMA_MODELS
+              value: {{ .Values.persistence.mountPath }}
+
+          volumeMounts:
+            - name: ollama-storage
+              mountPath: {{ .Values.persistence.mountPath }}
+
+      ############################################
+      # MAIN CONTAINER
+      ############################################
+      containers:
+        - name: ollama
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          ports:
+            - containerPort: {{ .Values.service.port }}
+
+          env:
+            - name: HOME
+              value: /tmp
+            - name: OLLAMA_MODELS
+              value: {{ .Values.persistence.mountPath }}
+            - name: OLLAMA_NUM_PARALLEL
+              value: "{{ .Values.env.OLLAMA_NUM_PARALLEL }}"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "{{ .Values.env.OLLAMA_MAX_LOADED_MODELS }}"
+            - name: OLLAMA_KEEP_ALIVE
+              value: "{{ .Values.env.OLLAMA_KEEP_ALIVE }}"
+
+          ############################################
+          # READINESS PROBE — Prevent Early Traffic
+          ############################################
+          readinessProbe:
+            httpGet:
+              path: /api/tags
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 10
+
+          ############################################
+          # RESOURCE LIMITS
+          ############################################
+          resources:
+  {{- toYaml .Values.resources | nindent 12 }}
+
+          volumeMounts:
+            - name: ollama-storage
+              mountPath: {{ .Values.persistence.mountPath }}
+
+############################################
+# STORAGE
+############################################
+  {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: ollama-storage
+          persistentVolumeClaim:
+            claimName: ollama-pvc
+  {{- end }}

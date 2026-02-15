@@ -1,6 +1,8 @@
 spring:
   application:
     name: test-orchestrator
+  main:
+    web-application-type: reactive
   kafka:
     bootstrap-servers: >-
       kafka-0-ext:9092,
@@ -14,11 +16,6 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-  main:
-    web-application-type: reactive
-    websocket:
-      compression:
-        enabled: false
 springdoc:
   api-docs:
     path: /v3/api-docs

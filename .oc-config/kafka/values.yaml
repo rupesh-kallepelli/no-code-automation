@@ -1,0 +1,48 @@
+namespace: kallepallirupesh-dev
+ocProject: rm2.thpm.p1
+
+replicaCount: 3
+
+routes:
+  enabled: false
+  externalPort: 443   # Port exposed via OpenShift Route
+
+kafka:
+  image: confluentinc/cp-kafka:7.5.0
+  port: 9092
+  extPort: 9094
+  resources:
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+  env:
+    - name: KAFKA_LISTENERS
+      value: 'INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094'
+    - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+      value: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+    - name: KAFKA_INTER_BROKER_LISTENER_NAME
+      value: INTERNAL
+    - name: KAFKA_BROKER_ID
+      value: "-1"
+    - name: KAFKA_ZOOKEEPER_CONNECT
+      value: "zookeeper:2181"
+    - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+      value: "1"
+    - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+      value: "1"
+    - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+      value: "1"
+    - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+      value: "true"
+
+zookeeper:
+  image: confluentinc/cp-zookeeper:7.5.0
+  port: 2181
+
+kafkaUi:
+  image: provectuslabs/kafka-ui:latest
+  port: 8080
+  clusterName: "ocp-cluster"

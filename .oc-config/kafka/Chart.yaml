@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kafka-ocp
+description: Minimal Kafka for OCP Free Trial
+type: application
+version: 0.1.0
+appVersion: "7.5.0"

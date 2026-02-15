@@ -11,6 +11,7 @@ on:
           - browser-service-registry
           - browser-service
           - test-runner-slave
+          - test-orchestrator
   push:
     branches: [ main ]
 

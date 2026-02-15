@@ -37,4 +37,4 @@ env:
   OLLAMA_KEEP_ALIVE: "24h"
 
 model:
-  name: qwen2.5:0.5b
+  name: tinyllama

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  serviceName: "kafka"
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: {{ .Values.kafka.image }}
+          ports:
+            - containerPort: {{ .Values.kafka.port }}
+            - containerPort: {{ .Values.kafka.extPort }}
+          resources:
+{{ toYaml .Values.kafka.resources | nindent 12 }}
+          env:
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: |-
+                INTERNAL://kafka-$(POD_ID)-ext:9092,
+                {{- range $i, $e := until (int $.Values.replicaCount) }}
+                EXTERNAL://kafka-{{ $i }}-ext-{{ $.Values.namespace }}.apps.{{ $.Values.ocProject }}.openshiftapps.com:{{ $.Values.routes.externalPort }}{{ if not (eq (add $i 1) (int $.Values.replicaCount)) }},{{ end }}
+                {{- end }}
+  {{- with .Values.kafka.env }}
+{{ toYaml . | nindent 12 }}
+{{- end }}

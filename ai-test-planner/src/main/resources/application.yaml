@@ -12,11 +12,11 @@ spring:
     ollama:
       base-url: https://ollama-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
       chat:
-        model: qwen2.5:0.5b
+        model: tinyllama
         options:
           temperature: 0
           top-p: 0.1
-          max-tokens: 2000
+          max-tokens: 4000
 management:
   endpoints:
     web:

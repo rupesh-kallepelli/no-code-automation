@@ -12,9 +12,7 @@ import java.nio.charset.StandardCharsets;
 public class PromptConfig {
 
     @Bean
-    public String testCaseSystemPrompt(
-            @Value("classpath:prompts/test-case.txt") Resource resource
-    ) throws IOException {
+    public String testCaseSystemPrompt(@Value("classpath:prompts/nl-test-case-process.txt") Resource resource) throws IOException {
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 }

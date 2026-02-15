@@ -3,14 +3,19 @@ server:
 spring:
   application:
     name: ai-test-planner
-  #  data:
-  #    redis:
-  #      host: redis
-  #      port: 6379
-  #      password: StrongPassword123!
+  kafka:
+    bootstrap-servers: >-
+      kafka-0-ext:9092,
+      kafka-1-ext:9092,
+      kafka-2-ext:9092
+    consumer:
+      group-id: test-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   ai:
     ollama:
-      base-url: https://ollama-kallepallirupesh-dev.apps.rm2.thpm.p1.openshiftapps.com
+      base-url: http://ollama:11434
       chat:
         model: tinyllama
         options:

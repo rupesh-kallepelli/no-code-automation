@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "test-orchestrator.name" -}}
+{{- define "ai-test-planner.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "test-orchestrator.fullname" -}}
+{{- define "ai-test-planner.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "test-orchestrator.chart" -}}
+{{- define "ai-test-planner.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "test-orchestrator.labels" -}}
-helm.sh/chart: {{ include "test-orchestrator.chart" . }}
-{{ include "test-orchestrator.selectorLabels" . }}
+{{- define "ai-test-planner.labels" -}}
+helm.sh/chart: {{ include "ai-test-planner.chart" . }}
+{{ include "ai-test-planner.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "test-orchestrator.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "test-orchestrator.name" . }}
+{{- define "ai-test-planner.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "ai-test-planner.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "test-orchestrator.serviceAccountName" -}}
+{{- define "ai-test-planner.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "test-orchestrator.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "ai-test-planner.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

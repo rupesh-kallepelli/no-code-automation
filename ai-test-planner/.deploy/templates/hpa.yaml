@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "test-orchestrator.fullname" . }}
+  name: {{ include "ai-test-planner.fullname" . }}
   labels:
-    {{- include "test-orchestrator.labels" . | nindent 4 }}
+    {{- include "ai-test-planner.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "test-orchestrator.fullname" . }}
+    name: {{ include "ai-test-planner.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

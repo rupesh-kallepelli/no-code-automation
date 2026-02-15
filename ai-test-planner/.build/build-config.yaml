@@ -1,12 +1,12 @@
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
-  name: test-orchestrator
+  name: ai-test-planner
 ---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
-  name: test-orchestrator
+  name: ai-test-planner
 spec:
   source:
     type: Binary
@@ -19,4 +19,4 @@ spec:
   output:
     to:
       kind: ImageStreamTag
-      name: test-orchestrator:latest
+      name: ai-test-planner:latest

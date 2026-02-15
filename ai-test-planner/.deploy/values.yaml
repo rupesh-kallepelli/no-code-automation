@@ -23,7 +23,7 @@ podAnnotations:
   prometheus.io/port: "8080"
   prometheus.io/scrape: "true"
 podLabels:
-  app: test-orchestrator
+  app: ai-test-planner
 
 podSecurityContext: { }
 # fsGroup: 2000

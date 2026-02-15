@@ -12,6 +12,7 @@ on:
           - browser-service
           - test-runner-slave
           - test-orchestrator
+          - ai-test-planner
   push:
     branches: [ main ]
 

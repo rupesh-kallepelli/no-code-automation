@@ -1,22 +1,21 @@
-package com.vr.test.orchestrator;
+package com.vr.test.orchestrator.service;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class KafkaTestService {
+public class KafkaService {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public KafkaTestService(KafkaTemplate<String, String> kafkaTemplate) {
+    public KafkaService(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     // Produce a message to topic
     public void sendMessage(String topic, String message) {
         kafkaTemplate.send(topic, message);
-        System.out.println("Sent message: " + message + " to topic: " + topic);
     }
 
     // Consume messages from topic

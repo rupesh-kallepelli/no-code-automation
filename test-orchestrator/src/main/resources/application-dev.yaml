@@ -1,0 +1,16 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: test-orchestrator
+  kafka:
+    bootstrap-servers: >-
+      172.19.226.122:9092
+    consumer:
+      group-id: test-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer

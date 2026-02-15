@@ -14,3 +14,33 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  main:
+    web-application-type: reactive
+    websocket:
+      compression:
+        enabled: false
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,liveness   # expose actuator endpoints
+  metrics:
+    export:
+      prometheus:
+        enabled: true                     # enable Prometheus registry
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessstate:
+      enabled: true

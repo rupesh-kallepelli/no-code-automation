@@ -1,12 +1,12 @@
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
-  name: test-runner-slave
+  name: test-orchestrator
 ---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
-  name: test-runner-slave
+  name: test-orchestrator
 spec:
   source:
     type: Binary
@@ -19,4 +19,4 @@ spec:
   output:
     to:
       kind: ImageStreamTag
-      name: test-runner-slave:latest
+      name: test-orchestrator:latest

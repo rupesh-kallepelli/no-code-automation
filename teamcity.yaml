@@ -1,0 +1,254 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: teamcity
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: teamcity-agent
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: teamcity
+spec:
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM jetbrains/teamcity-server:latest
+
+      USER root
+
+      # Make required dirs writable for OpenShift random UID
+      RUN chgrp -R 0 /opt/teamcity \
+          && chmod -R g=u /opt/teamcity \
+          && chgrp -R 0 /data \
+          && chmod -R g=u /data
+
+      USER 1001
+
+      # Override entrypoint to bypass run-services.sh
+      CMD ["/opt/teamcity/bin/teamcity-server.sh", "run"]
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: teamcity:latest
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: teamcity-agent
+spec:
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM jetbrains/teamcity-agent:latest
+
+      USER root
+
+      # Fix permissions for OpenShift random UID
+      RUN chgrp -R 0 /opt/buildagent \
+          && chmod -R g=u /opt/buildagent \
+          && chgrp -R 0 /data \
+          && chmod -R g=u /data
+
+      USER 1001
+
+      # Start agent
+      CMD ["/opt/buildagent/bin/agent.sh", "run"]
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: teamcity-agent:latest
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: teamcity-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: teamcity-db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teamcity-postgres
+  template:
+    metadata:
+      labels:
+        app: teamcity-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+
+          env:
+            - name: POSTGRES_DB
+              value: teamcity
+            - name: POSTGRES_USER
+              value: teamcity
+            - name: POSTGRES_PASSWORD
+              value: teamcitypass
+
+          ports:
+            - containerPort: 5432
+
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: teamcity-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teamcity-postgres
+spec:
+  selector:
+    app: teamcity-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teamcity
+  template:
+    metadata:
+      labels:
+        app: teamcity
+    spec:
+      containers:
+        - name: teamcity
+          image: image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/teamcity:latest
+          ports:
+            - containerPort: 8111
+          volumeMounts:
+            - name: teamcity-data
+              mountPath: /data/teamcity_server/datadir
+          resources:
+            limits:
+              cpu: '1'
+              memory: 3Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+      volumes:
+        - name: teamcity-data
+          persistentVolumeClaim:
+            claimName: teamcity-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: teamcity-agent
+  template:
+    metadata:
+      labels:
+        app: teamcity-agent
+    spec:
+      containers:
+        - name: teamcity-agent
+          image: image-registry.openshift-image-registry.svc:5000/kallepallirupesh-dev/teamcity-agent:latest
+
+          env:
+            - name: SERVER_URL
+              value: "http://teamcity:8111"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+          volumeMounts:
+            - name: agent-data
+              mountPath: /data/teamcity_agent
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+
+      volumes:
+        - name: agent-data
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teamcity
+spec:
+  selector:
+    app: teamcity
+  ports:
+    - protocol: TCP
+      port: 8111
+      targetPort: 8111
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: teamcity
+spec:
+  to:
+    kind: Service
+    name: teamcity
+  port:
+    targetPort: 8111
+  tls:
+    termination: edge

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-agent
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: teamcity-agent
+  template:
+    metadata:
+      labels:
+        app: teamcity-agent
+    spec:
+      containers:
+        - name: teamcity-agent
+          image: image-registry.openshift-image-registry.svc:5000/{{ .Values.namespace }}/teamcity-agent:latest
+          env:
+            - name: SERVER_URL
+              value: "http://teamcity:8111"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+{{ toYaml .Values.resources.agent | indent 12 }}
+          volumeMounts:
+            - name: agent-data
+              mountPath: /data/teamcity_agent
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+      volumes:
+        - name: agent-data
+          emptyDir: {}

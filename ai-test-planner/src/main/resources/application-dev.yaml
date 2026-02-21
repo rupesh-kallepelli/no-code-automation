@@ -3,20 +3,26 @@ server:
 spring:
   application:
     name: ai-test-planner
-  #  data:
-  #    redis:
-  #      host: redis
-  #      port: 6379
-  #      password: StrongPassword123!
+  kafka:
+    bootstrap-servers: >-
+      172.19.226.122:9092
   ai:
-    ollama:
-      base-url: http://localhost:11434
+    openai:
+      api-key: ${OPEN_ROUTER_KEY}
+      base-url: https://openrouter.ai/api
       chat:
-        model: qwen2.5:0.5b
         options:
+          model: meta-llama/llama-3.2-3b-instruct:free
           temperature: 0
           top-p: 0.1
-          max-tokens: 5000
+#    ollama:
+#      base-url: http://localhost:11434
+#      chat:
+#        model: tinyllama
+#        options:
+#          temperature: 0
+#          top-p: 0.1
+#          max-tokens: 5000
 management:
   endpoints:
     web:

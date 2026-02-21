@@ -1,0 +1,65 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: teamcity
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: teamcity-agent
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: teamcity
+spec:
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM jetbrains/teamcity-server:latest
+
+      USER root
+
+      # Make required dirs writable for OpenShift random UID
+      RUN chgrp -R 0 /opt/teamcity \
+          && chmod -R g=u /opt/teamcity \
+          && chgrp -R 0 /data \
+          && chmod -R g=u /data
+
+      USER 1001
+
+      # Override entrypoint to bypass run-services.sh
+      CMD ["/opt/teamcity/bin/teamcity-server.sh", "run"]
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: teamcity:latest
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: teamcity-agent
+spec:
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM jetbrains/teamcity-agent:latest
+
+      USER root
+
+      # Fix OpenShift permissions
+      RUN chgrp -R 0 /opt/buildagent && chmod -R g=u /opt/buildagent && \
+          mkdir -p /data/teamcity_agent && \
+          chgrp -R 0 /data && chmod -R g=u /data
+
+      USER 1001
+
+      CMD ["/bin/bash","-c","CONF_DIR=/data/teamcity_agent/conf; mkdir -p $CONF_DIR; if [ ! -f $CONF_DIR/buildAgent.properties ]; then cp /opt/buildagent/conf/buildAgent.dist.properties $CONF_DIR/buildAgent.properties; sed -i \"s|serverUrl=.*|serverUrl=${SERVER_URL}|g\" $CONF_DIR/buildAgent.properties; sed -i \"s|name=.*|name=${AGENT_NAME}|g\" $CONF_DIR/buildAgent.properties; fi; /opt/buildagent/bin/agent.sh run"]
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: teamcity-agent:latest

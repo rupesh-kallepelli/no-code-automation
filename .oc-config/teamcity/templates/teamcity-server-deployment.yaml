@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teamcity
+  template:
+    metadata:
+      labels:
+        app: teamcity
+    spec:
+      initContainers:
+        - resources: { }
+          terminationMessagePath: /dev/termination-log
+          name: init-db-config
+          command:
+            - /bin/sh
+            - '-c'
+            - |
+              CONF_DIR=/data/teamcity_server/datadir/config
+              mkdir -p $CONF_DIR
+              if [ ! -f $CONF_DIR/database.properties ]; then
+                echo "connectionUrl=${DB_URL}" > $CONF_DIR/database.properties
+                echo "connectionProperties.user=${DB_USER}" >> $CONF_DIR/database.properties
+                echo "connectionProperties.password=${DB_PASSWORD}" >> $CONF_DIR/database.properties
+                echo "maxConnections=20" >> $CONF_DIR/database.properties
+              fi
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: teamcity-data
+              mountPath: /data/teamcity_server/datadir
+          terminationMessagePolicy: File
+          envFrom:
+            - secretRef:
+                name: teamcity-db-secret
+          image: registry.access.redhat.com/ubi9/ubi-minimal
+      containers:
+        - name: teamcity
+          image: image-registry.openshift-image-registry.svc:5000/{{ .Values.namespace }}/teamcity:latest
+          ports:
+            - containerPort: 8111
+          resources:
+{{ toYaml .Values.resources.server | indent 12 }}
+          volumeMounts:
+            - name: teamcity-data
+              mountPath: /data/teamcity_server/datadir
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+      volumes:
+        - name: teamcity-data
+          persistentVolumeClaim:
+            claimName: teamcity-data

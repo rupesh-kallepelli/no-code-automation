@@ -1,0 +1,39 @@
+namespace: kallepallirupesh-dev
+
+image:
+  server: image-registry.openshift-image-registry.svc:5000/{{ .Values.namespace }}/teamcity:latest
+  agent: image-registry.openshift-image-registry.svc:5000/{{ .Values.namespace }}/teamcity-agent:latest
+
+ingress:
+  enabled: false
+  host: teamcity.apps.example.openshift.com
+  className: openshift-default
+
+resources:
+  server:
+    limits:
+      cpu: "1"
+      memory: 3Gi
+  agent:
+    requests:
+      memory: 256Mi
+      cpu: 200m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  postgres:
+    requests:
+      memory: 256Mi
+      cpu: 200m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+postgres:
+  db: teamcity
+  user: teamcity
+  password: teamcitypass
+  storage: 2Gi
+
+server:
+  storage: 5Gi

@@ -1,0 +1,13 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: teamcity
+  namespace: {{ .Values.namespace }}
+spec:
+  to:
+    kind: Service
+    name: teamcity
+  port:
+    targetPort: 8111
+  tls:
+    termination: edge

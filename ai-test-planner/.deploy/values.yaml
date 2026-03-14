@@ -25,12 +25,20 @@ podAnnotations:
 podLabels:
   app: ai-test-planner
 
+env:
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+envFrom:
+  - secretRef:
+      name: postgres-secret
 podSecurityContext: { }
 # fsGroup: 2000
 
 securityContext: { }
   # capabilities:
-  #   drop:
+#   drop:
 #   - ALL
 # readOnlyRootFilesystem: true
 # runAsNonRoot: true
@@ -44,27 +52,27 @@ service:
 ingress:
   enabled: true
   className: "nginx"
-#  annotations:
-#    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-#  hosts:
-#    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
-#      http:
-#        paths:
-#          - path: /
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: browser-service
-#                port:
-#                  number: 8080
-#  tls: [ ]
+  #  annotations:
+  #    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  #  hosts:
+  #    - host: browser-service-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+  #      http:
+  #        paths:
+  #          - path: /
+  #            pathType: Prefix
+  #            backend:
+  #              service:
+  #                name: browser-service
+  #                port:
+  #                  number: 8080
+  #  tls: [ ]
   # - secretName: chart-example-tls
   #   hosts:
   #     - chart-example.local
 
 resources: { }
   # limits:
-  #   cpu: 100m
+#   cpu: 100m
 #   memory: 128Mi
 # requests:
 #   cpu: 100m

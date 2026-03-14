@@ -157,6 +157,56 @@ DRAG
 → Drag source to target
 
 ================
+IDENTIFIER GENERATION RULE (CRITICAL)
+================
+
+Identifiers represent semantic UI clues extracted from the NL step.
+They are NOT locators and NOT free text descriptions.
+
+Identifiers MUST be derived from UI-observable properties.
+
+Allowed identifier types:
+
+ROLE
+LABEL
+PLACEHOLDER
+VISIBLE_TEXT
+BUTTON_TEXT
+FIELD_NAME
+ARIA_LABEL
+NAME
+TITLE
+
+Identifier value MUST be:
+
+- visible on UI OR
+- accessible name OR
+- common field purpose word
+
+DO NOT use vague NL phrases like:
+
+❌ "Google search bar"
+❌ "top textbox"
+❌ "main button"
+❌ "search area"
+
+GOOD examples:
+
+Search input:
+{ "identifier":"ROLE","value":"searchbox" }
+{ "identifier":"PLACEHOLDER","value":"Search" }
+{ "identifier":"FIELD_NAME","value":"search" }
+
+Search button:
+{ "identifier":"ROLE","value":"button" }
+{ "identifier":"VISIBLE_TEXT","value":"Search" }
+{ "identifier":"ARIA_LABEL","value":"Google Search" }
+
+If NL says "search box", convert to semantic ROLE searchbox.
+
+If NL says "search button", convert to ROLE button + VISIBLE_TEXT Search.
+
+================
 EXAMPLES
 ========
 

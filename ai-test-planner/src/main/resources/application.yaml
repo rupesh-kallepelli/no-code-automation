@@ -13,15 +13,24 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  datasource:
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
   ai:
+    vectorstore:
+      pgvector:
+        initialize-schema: true
     ollama:
       base-url: http://ollama:11434
       chat:
-        model: tinyllama
         options:
+          model: llama3.3:70b
           temperature: 0
           top-p: 0.1
-          max-tokens: 4000
+      embedding:
+        options:
+          model: bge-m3
 management:
   endpoints:
     web:

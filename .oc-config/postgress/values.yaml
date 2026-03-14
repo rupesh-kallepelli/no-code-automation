@@ -1,0 +1,40 @@
+namespace: kallepallirupesh-dev
+
+image:
+  repository: ankane/pgvector
+  tag: latest
+  pullPolicy: IfNotPresent
+
+postgres:
+  database: testai
+  username: testai
+  password: testai
+
+storage:
+  size: 10Gi
+  storageClassName: ""   # leave empty to use default
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+
+service:
+  port: 5432
+
+pgadmin:
+  enabled: true
+
+  image:
+    repository: docker.io/library/adminer
+    tag: latest
+
+  credentials:
+    email: admin@admin.com
+    password: admin123
+
+  service:
+    port: 8080

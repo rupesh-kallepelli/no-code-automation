@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ollama
+  name: {{ .Chart.Name }}
   namespace: {{ .Values.namespace }}
 spec:
   replicas: {{ .Values.replicaCount }}
@@ -28,9 +28,13 @@ spec:
             - |
               ollama serve &
               sleep 5
-              ollama pull {{ .Values.model.name }}
+              {{- range .Values.model }}
+              ollama pull {{ . }}
+              {{- end }}
 
           env:
+            - name: OLLAMA_NUM_THREADS
+              value: "8"
             - name: HOME
               value: /tmp
             - name: OLLAMA_MODELS
@@ -71,7 +75,7 @@ spec:
               path: /api/tags
               port: {{ .Values.service.port }}
             initialDelaySeconds: 15
-            periodSeconds: 5
+            periodSeconds: 30
             failureThreshold: 10
 
           ############################################

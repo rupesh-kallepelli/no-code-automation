@@ -1,7 +1,8 @@
 package com.vr.ai.test.planner.controller;
 
+import com.vr.ai.test.planner.model.testcase.TestCase;
+import com.vr.ai.test.planner.service.TestPlanService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,19 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class AIPlannerController {
-
-    private final ChatClient chatClient;
-    private final String testCaseSystemPrompt;
+    private final TestPlanService testPlanService;
 
     @PostMapping("/generate-test")
-    public ResponseEntity<String> generateTest(@RequestBody String userInput) {
-
-        String response = chatClient.prompt()
-                .system(testCaseSystemPrompt)
-                .user(userInput)
-                .call()
-                .content();
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<TestCase> generateTest(@RequestBody String userInput) {
+        return ResponseEntity.ok(testPlanService.getTestCase(userInput));
     }
 }

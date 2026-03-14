@@ -1,20 +1,16 @@
 package com.vr.ai.test.planner.model.testcase;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Getter
-@Setter
-public class TestCase {
-    @NotBlank(message = "testName can't be blank or empty or null")
-    String testName;
-    @NotNull(message = "steps can't be null")
-    List<TestCaseStep> steps;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record TestCase(
+        @NotBlank(message = "testName can't be blank or empty or null") String testName,
+        @NotNull(message = "TestCaseStep can't be null") List<TestCaseStep> steps) {
 }

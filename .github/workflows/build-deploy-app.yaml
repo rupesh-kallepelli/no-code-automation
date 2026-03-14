@@ -90,6 +90,15 @@ jobs:
           cd ..
           echo "------------------------------------------------------------------------Build Successfully for chrome-launcher------------------------------------------------------------------------"
 
+      - name: smart-locator-engine build
+        run: |
+          echo "------------------------------------------------------------------------Building smart-locator-engine------------------------------------------------------------------------"
+          cd ./smart-locator-engine
+          ls -lrt
+          chmod +x ./mvnw
+          ./mvnw clean install
+          cd ..
+          echo "------------------------------------------------------------------------Build Successfully for smart-locator-engine------------------------------------------------------------------------"
 
       - name: Build ${{ github.event.inputs.service }}
         run: |

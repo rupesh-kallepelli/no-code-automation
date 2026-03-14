@@ -1,0 +1,13 @@
+{{- if .Values.pgadmin.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: pgadmin
+  namespace: {{ .Values.namespace }}
+spec:
+  to:
+    kind: Service
+    name: pgadmin
+  port:
+    targetPort: {{ .Values.pgadmin.service.port }}
+{{- end }}

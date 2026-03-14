@@ -23,18 +23,20 @@ resources:
     memory: "2Gi"
     cpu: "500m"
   limits:
-    memory: "3Gi"
-    cpu: "1"
+    memory: "16Gi"
+    cpu: "8"
 
 persistence:
   enabled: true
-  size: 5Gi
+  size: 50Gi
   mountPath: /tmp/.ollama
 
 env:
-  OLLAMA_NUM_PARALLEL: "1"
-  OLLAMA_MAX_LOADED_MODELS: "1"
+  OLLAMA_NUM_PARALLEL: "5"
+  OLLAMA_MAX_LOADED_MODELS: "5"
   OLLAMA_KEEP_ALIVE: "24h"
 
 model:
-  name: tinyllama
+  - llama3.3:70b
+  - bge-m3
+  - mxbai-embed-large

@@ -2,13 +2,13 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: ollama
+  name: {{ .Chart.Name }}
   namespace: {{ .Values.namespace }}
 spec:
-  host: ollama-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
+  host: {{ .Chart.Name }}-{{ .Values.namespace }}.apps.{{ .Values.ocProject }}.openshiftapps.com
   to:
     kind: Service
-    name: ollama
+    name: {{ .Chart.Name }}
   port:
     targetPort: http
   tls:

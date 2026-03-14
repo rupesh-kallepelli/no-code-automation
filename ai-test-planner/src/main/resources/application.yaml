@@ -3,6 +3,11 @@ server:
 spring:
   application:
     name: ai-test-planner
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 200MB
+      max-request-size: 200MB
   kafka:
     bootstrap-servers: >-
       kafka-0-ext:9092,
